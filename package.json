@@ -1,0 +1,25 @@
+{
+  "name": "blacksocket.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blackmiaool/blacksocket.io.git"
+  },
+  "author": "blackmiaool",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blackmiaool/blacksocket.io/issues"
+  },
+  "homepage": "https://github.com/blackmiaool/blacksocket.io#readme",
+  "dependencies": {
+    "ws": "^3.2.0"
+  },
+  "devDependencies": {
+    "webpack": "^3.6.0"
+  }
+}
