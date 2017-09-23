@@ -54,7 +54,9 @@ class Socket {
         msg.data = data;
         msg.event = event;
         msg.type = "msg";
-        this.ws.send(JSON.stringify(msg));
+        if(this.ws.readyState===1){
+            this.ws.send(JSON.stringify(msg));
+        }        
     }
     sendCb(uid, data) {
         this.ws.send(JSON.stringify({

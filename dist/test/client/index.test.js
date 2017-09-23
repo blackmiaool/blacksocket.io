@@ -33,9 +33,6 @@
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
 /******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -63,11 +60,27 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+const io=__webpack_require__(1);
+const socket = io(`:23033/test`);
+setInterval(()=>{
+    socket.emit('client-event',{a:'client params'},function(cbParams){
+        console.log('client-event cb',cbParams);
+    });
+},1000);
+socket.on('server-event',function(params,cb){
+    console.log('server-event',params);
+    cb({a:"server-event cb"});
+});
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Socket=__webpack_require__(2);
@@ -116,22 +129,6 @@ function getSocket(addr="/") {
     return socket;
 }
 module.exports=getSocket;
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-const io=__webpack_require__(0);
-const socket = io(`:23033/test`);
-setInterval(()=>{
-    socket.emit('client-event',{a:'client params'},function(cbParams){
-        console.log('client-event cb',cbParams);
-    });
-},1000);
-socket.on('server-event',function(params,cb){
-    console.log('server-event',params);
-    cb({a:"server-event cb"});
-});
 
 /***/ }),
 /* 2 */
