@@ -8,5 +8,6 @@ A super simple websocket wrapper.
 * Object sending
 
 ### Usage
-[Server](https://github.com/blackmiaool/blacksocket.io/tree/master/test/server/index.js)
-[Client](https://github.com/blackmiaool/blacksocket.io/tree/master/test/client/index.js)
+[Server](https://github.com/blackmiaool/blacksocket.io/tree/master/demo/server/index.js)
+
+[Client](https://github.com/blackmiaool/blacksocket.io/tree/master/demo/client/index.js)
