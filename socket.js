@@ -64,7 +64,9 @@ class Socket {
             uid,
             data
         }),function(err){
-            console.warn('err',err);
+            if(err){
+                console.warn('err',err);
+            }            
         });
     }
     on(event, cb) {
