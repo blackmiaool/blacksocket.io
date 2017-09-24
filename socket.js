@@ -63,7 +63,9 @@ class Socket {
             type: "cb",
             uid,
             data
-        }));
+        }),function(err){
+            console.warn('err',err);
+        });
     }
     on(event, cb) {
         if (event === "open" || event === "close") {
