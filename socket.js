@@ -32,12 +32,39 @@ class Socket {
                 delete this.cbMap[uid];
             }
         });
+
+
+        ws.addEventListener('open', () => {
+            const connectMap = this.eventListenerMap['connect'];
+            const reconnectMap = this.eventListenerMap['reconnect'];
+            const firstMap = this.eventListenerMap['first-connect'];
+            connectMap && connectMap.forEach((cb) => {
+                cb();
+            });
+            if (!this.firstConnect) {
+                reconnectMap && reconnectMap.forEach((cb) => {
+                    cb();
+                });
+            } else {
+                this.firstConnect = false;
+                firstMap && firstMap.forEach((cb) => {
+                    cb();
+                });
+            }
+        });
+        ws.addEventListener('close',  () =>{
+            const disconnectMap = this.eventListenerMap['first-connect'];
+            disconnectMap && disconnectMap.forEach((cb) => {
+                cb();
+            });
+        });
     }
     constructor() {
         Object.assign(this, {
             uid: 1,
             eventListenerMap: {},
-            cbMap: {}
+            cbMap: {},
+            firstConnect: true
         });
     }
     close() {
@@ -54,30 +81,28 @@ class Socket {
         msg.data = data;
         msg.event = event;
         msg.type = "msg";
-        if(this.ws.readyState===1){
+        if (this.ws.readyState === 1) {
             this.ws.send(JSON.stringify(msg));
-        }        
+        }
     }
     sendCb(uid, data) {
         this.ws.send(JSON.stringify({
             type: "cb",
             uid,
             data
-        }),function(err){
-            if(err){
-                console.warn('err',err);
-            }            
+        }), function (err) {
+            if (err) {
+                console.warn('err', err);
+            }
         });
     }
     on(event, cb) {
-        if (event === "open" || event === "close") {
-            this.ws.addEventListener(event, cb);
-        } else {
+
             if (!this.eventListenerMap[event]) {
                 this.eventListenerMap[event] = [];
             }
             this.eventListenerMap[event].push(cb);
-        }
+        
 
     }
 }
