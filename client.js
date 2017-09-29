@@ -1,21 +1,31 @@
-const Socket=require('./socket');
+const Socket = require('./socket');
+const isBrowser = typeof location !== 'undefined';
 
-function getSocket(addr="/") {    
+function getSocket(addr = "/") {
+    
     let ws;
     //auto connect
     let checkInterval;
     
-    const protocol=location.protocol.replace('http','ws');
-    if(addr.startsWith(':')||addr.startsWith('/')){
-        const protocol=location.protocol.replace('http','ws');
-        addr=`${protocol}//${location.hostname}${addr}`;
+    const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
+    const hostname = isBrowser ? location.hostname : 'localhost';
+    if (addr.startsWith(':') || addr.startsWith('/')) {
+        addr = `${protocol}//${hostname}${addr}`;
+    }else{
+        throw new Error('invalid addr'+addr);
     }
-
+    
+    let WS;
+    if (isBrowser) {
+        WS = WebSocket;
+    } else {        
+        WS = require('ws');
+    }
     function connect(addr) {
         if (socket.ws) {
             socket.ws.close();
         }
-        ws = new WebSocket(addr);
+        ws = new WS(addr);
         ws.addEventListener("close", function (event) {
             if (checkInterval) {
                 clearInterval(checkInterval);
@@ -37,10 +47,10 @@ function getSocket(addr="/") {
     const socket = new Socket();
     connect(addr);
     this.lifeInterval = setInterval(() => {
-        if (ws.readyState == WebSocket.OPEN) {
+        if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
     }, 25000);
     return socket;
 }
-module.exports=getSocket;
+module.exports = getSocket;

@@ -22,9 +22,9 @@ describe('server', function () {
 });
 describe('client', function () {
     it('should be established with a port', function () {
-        io.bind(undefined, testPost).should.not.throw();
+        ioc.bind(undefined, `:${testPost}`).should.not.throw();
     });
     it('should be established with a path', function () {
-        io.bind(undefined, `:${testPost}/${testPath}`).should.not.throw();
+        ioc.bind(undefined, `:${testPost}${testPath}`).should.not.throw();
     });
 });
