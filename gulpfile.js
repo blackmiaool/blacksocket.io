@@ -3,7 +3,7 @@ const replace = require('gulp-replace');
 const concatES6 = require('./gulp-concat-es6');
 gulp.task('demo', () => {
     return gulp.src(['./test/**/*'])
-        .pipe(replace('../../src/', 'blacksocket.io/'))
+        .pipe(replace('../../', 'blacksocket.io/'))
         .pipe(gulp.dest('demo'))
 });
 gulp.task('es6', () => {

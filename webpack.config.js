@@ -40,7 +40,7 @@ module.exports = [{
 }, {
     entry: './test/client/index.js',
     output: {
-        path: path.resolve(__dirname, './dist/test/client'),
+        path: path.resolve(__dirname, './dist/'),
         filename: 'index.test.js'
     },
     plugins: [

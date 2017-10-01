@@ -1,4 +1,4 @@
-const io = require('../../server')(23033, {
+const io = require('blacksocket.io/server')(23033, {
     path: '/test',
     serveClient: false,
 });

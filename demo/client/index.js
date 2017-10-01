@@ -1,4 +1,4 @@
-const io = require("../../client");
+const io = require("blacksocket.io/client");
 const socket = io(`:23033/test`);
 socket.on('connect', function () {
     console.log('connected');
