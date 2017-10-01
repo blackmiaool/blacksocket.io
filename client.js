@@ -22,6 +22,12 @@ function getSocket(addr = "/") {
         WS = require('ws');
     }
     function connect(addr) {
+        if(socket.closed){
+            if(checkInterval){
+                clearInterval(checkInterval);
+            }            
+            return ;
+        }
         if (socket.ws) {
             socket.ws.close();
         }

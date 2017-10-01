@@ -52,8 +52,8 @@ class Socket {
                 });
             }
         });
-        ws.addEventListener('close',  () =>{
-            const disconnectMap = this.eventListenerMap['first-connect'];
+        ws.addEventListener('close', () => {
+            const disconnectMap = this.eventListenerMap['disconnect'];
             disconnectMap && disconnectMap.forEach((cb) => {
                 cb();
             });
@@ -64,10 +64,16 @@ class Socket {
             uid: 1,
             eventListenerMap: {},
             cbMap: {},
-            firstConnect: true
+            firstConnect: true,
+            closed:false
         });
     }
+    open(){
+        this.closed=false;
+        this.ws.open();
+    }
     close() {
+        this.closed=true;
         this.ws.close();
     }
     emit(event, data, cb) {
@@ -98,11 +104,11 @@ class Socket {
     }
     on(event, cb) {
 
-            if (!this.eventListenerMap[event]) {
-                this.eventListenerMap[event] = [];
-            }
-            this.eventListenerMap[event].push(cb);
-        
+        if (!this.eventListenerMap[event]) {
+            this.eventListenerMap[event] = [];
+        }
+        this.eventListenerMap[event].push(cb);
+
 
     }
 }

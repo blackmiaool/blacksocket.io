@@ -1,18 +1,33 @@
 const WebSocket = require("ws");
-const Socket=require('./socket');
+const Socket = require('./socket');
 function createSocketIo(wsserver) {
     function on(event, cb) {
         return wsserver.on(event, function (ws) {
-            const socket = new Socket({
-                type: "server",
-                isClient: false
-            });
-            socket.init(ws);
-            cb(socket);
+            if (event === 'connection') {
+                const socket = new Socket({
+                    type: "server",
+                    isClient: false
+                });
+                socket.init(ws);
+                cb(socket);
+            } else {
+                cb();
+            }
+
         });
     }
+    function close() {
+        try{
+            wsserver._server&&wsserver._server.close();
+            wsserver.close()
+        }catch(e){
+            console.log(e)
+        }
+        
+    }
     return {
-        on
+        on,
+        close
     }
 };
 function creator1(server, options) {
