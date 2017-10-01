@@ -69,7 +69,7 @@
 
 const io = __webpack_require__(1);
 const socket = io(`:23033/test`);
-socket.on('connect', function () {
+socket.on('first-connect', function () {
     console.log('connected');
     setInterval(() => {
         socket.emit('client-event', { a: 'client params' }, function (cbParams) {
