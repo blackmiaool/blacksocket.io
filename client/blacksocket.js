@@ -1,13 +1,13 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("ws"));
+		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
-		define(["ws"], factory);
+		define([], factory);
 	else {
-		var a = typeof exports === 'object' ? factory(require("ws")) : factory(root["ws"]);
+		var a = factory();
 		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
 	}
-})(this, function(__WEBPACK_EXTERNAL_MODULE_2__) {
+})(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -103,7 +103,7 @@ function io() {
     if (isBrowser) {
         WS = WebSocket;
     } else {
-        WS = __webpack_require__(2);
+        WS = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"ws\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
     }
     function connect(addr) {
         if (socket.closed) {
@@ -136,7 +136,7 @@ function io() {
 
     var socket = new Socket();
     connect(addr);
-    this.lifeInterval = setInterval(function () {
+    setInterval(function () {
         if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
@@ -292,12 +292,6 @@ var Socket = function () {
 }();
 
 module.exports = Socket;
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
 
 /***/ })
 /******/ ]);

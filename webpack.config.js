@@ -16,7 +16,6 @@ module.exports = [{
         libraryTarget: 'umd',
 
     },
-    externals: { ws: 'ws' },
     module: {
         rules: [
             {
@@ -35,7 +34,8 @@ module.exports = [{
         new UglifyJSPlugin({
             include: /\.min\.js$/,
             minimize: true
-        })
+        }),
+        new webpack.IgnorePlugin(/ws/)
     ],
 }, {
     entry: './test/client/index.js',
@@ -43,10 +43,7 @@ module.exports = [{
         path: path.resolve(__dirname, './dist/test/client'),
         filename: 'index.test.js'
     },
-    externals: { ws: 'ws' },
-    module: {
-        loaders: [
-
-        ]
-    },
+    plugins: [
+        new webpack.IgnorePlugin(/ws/)
+    ],
 }]

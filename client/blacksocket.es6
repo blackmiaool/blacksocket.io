@@ -166,7 +166,7 @@ function io(addr = "/") {
 
     const socket = new Socket();
     connect(addr);
-    this.lifeInterval = setInterval(() => {
+    setInterval(() => {
         if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
