@@ -87,35 +87,36 @@ socket.on('server-event', function (params, cb) {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
+
 const Socket = __webpack_require__(2);
 const isBrowser = typeof location !== 'undefined';
 
-function getSocket(addr = "/") {
-    
+function io(addr = "/") {
+
     let ws;
     //auto connect
     let checkInterval;
-    
+
     const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
     const hostname = isBrowser ? location.hostname : 'localhost';
     if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = `${protocol}//${hostname}${addr}`;
-    }else{
-        throw new Error('invalid addr'+addr);
+    } else {
+        throw new Error('invalid addr' + addr);
     }
-    
+
     let WS;
     if (isBrowser) {
         WS = WebSocket;
-    } else {        
+    } else {
         WS = __webpack_require__(3);
     }
     function connect(addr) {
-        if(socket.closed){
-            if(checkInterval){
+        if (socket.closed) {
+            if (checkInterval) {
                 clearInterval(checkInterval);
-            }            
-            return ;
+            }
+            return;
         }
         if (socket.ws) {
             socket.ws.close();
@@ -148,7 +149,9 @@ function getSocket(addr = "/") {
     }, 25000);
     return socket;
 }
-module.exports = getSocket;
+
+module.exports = io;
+
 
 /***/ }),
 /* 2 */
@@ -221,15 +224,15 @@ class Socket {
             eventListenerMap: {},
             cbMap: {},
             firstConnect: true,
-            closed:false
+            closed: false
         });
     }
-    open(){
-        this.closed=false;
+    open() {
+        this.closed = false;
         this.ws.open();
     }
     close() {
-        this.closed=true;
+        this.closed = true;
         this.ws.close();
     }
     emit(event, data, cb) {
@@ -268,6 +271,7 @@ class Socket {
 
     }
 }
+
 module.exports = Socket;
 
 /***/ }),

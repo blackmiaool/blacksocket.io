@@ -1,32 +1,33 @@
+
 const Socket = require('./socket');
 const isBrowser = typeof location !== 'undefined';
 
-function getSocket(addr = "/") {
-    
+function io(addr = "/") {
+
     let ws;
     //auto connect
     let checkInterval;
-    
+
     const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
     const hostname = isBrowser ? location.hostname : 'localhost';
     if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = `${protocol}//${hostname}${addr}`;
-    }else{
-        throw new Error('invalid addr'+addr);
+    } else {
+        throw new Error('invalid addr' + addr);
     }
-    
+
     let WS;
     if (isBrowser) {
         WS = WebSocket;
-    } else {        
+    } else {
         WS = require('ws');
     }
     function connect(addr) {
-        if(socket.closed){
-            if(checkInterval){
+        if (socket.closed) {
+            if (checkInterval) {
                 clearInterval(checkInterval);
-            }            
-            return ;
+            }
+            return;
         }
         if (socket.ws) {
             socket.ws.close();
@@ -59,4 +60,5 @@ function getSocket(addr = "/") {
     }, 25000);
     return socket;
 }
-module.exports = getSocket;
+
+module.exports = io;

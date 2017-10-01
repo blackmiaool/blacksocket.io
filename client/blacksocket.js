@@ -83,7 +83,7 @@ return /******/ (function(modules) { // webpackBootstrap
 var Socket = __webpack_require__(1);
 var isBrowser = typeof location !== 'undefined';
 
-function getSocket() {
+function io() {
     var addr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "/";
 
 
@@ -143,7 +143,8 @@ function getSocket() {
     }, 25000);
     return socket;
 }
-module.exports = getSocket;
+
+module.exports = io;
 
 /***/ }),
 /* 1 */
