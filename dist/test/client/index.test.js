@@ -67,44 +67,60 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const io=__webpack_require__(1);
+const io = __webpack_require__(1);
 const socket = io(`:23033/test`);
-socket.on('connect',function(){
+socket.on('connect', function () {
     console.log('connected');
-    setInterval(()=>{
-        socket.emit('client-event',{a:'client params'},function(cbParams){
-            console.log('client-event cb',cbParams);
+    setInterval(() => {
+        socket.emit('client-event', { a: 'client params' }, function (cbParams) {
+            console.log('client-event cb', cbParams);
         });
-    },1000);
+    }, 1000);
 });
 
-socket.on('server-event',function(params,cb){
-    console.log('server-event',params);
-    cb({a:"server-event cb"});
+socket.on('server-event', function (params, cb) {
+    console.log('server-event', params);
+    cb({ a: "server-event cb" });
 });
 
 /***/ }),
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const Socket=__webpack_require__(2);
+const Socket = __webpack_require__(2);
+const isBrowser = typeof location !== 'undefined';
 
-function getSocket(addr="/") {    
+function getSocket(addr = "/") {
+    
     let ws;
     //auto connect
     let checkInterval;
     
-    const protocol=location.protocol.replace('http','ws');
-    if(addr.startsWith(':')||addr.startsWith('/')){
-        const protocol=location.protocol.replace('http','ws');
-        addr=`${protocol}//${location.hostname}${addr}`;
+    const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
+    const hostname = isBrowser ? location.hostname : 'localhost';
+    if (addr.startsWith(':') || addr.startsWith('/')) {
+        addr = `${protocol}//${hostname}${addr}`;
+    }else{
+        throw new Error('invalid addr'+addr);
     }
-
+    
+    let WS;
+    if (isBrowser) {
+        WS = WebSocket;
+    } else {        
+        WS = __webpack_require__(3);
+    }
     function connect(addr) {
+        if(socket.closed){
+            if(checkInterval){
+                clearInterval(checkInterval);
+            }            
+            return ;
+        }
         if (socket.ws) {
             socket.ws.close();
         }
-        ws = new WebSocket(addr);
+        ws = new WS(addr);
         ws.addEventListener("close", function (event) {
             if (checkInterval) {
                 clearInterval(checkInterval);
@@ -126,13 +142,13 @@ function getSocket(addr="/") {
     const socket = new Socket();
     connect(addr);
     this.lifeInterval = setInterval(() => {
-        if (ws.readyState == WebSocket.OPEN) {
+        if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
     }, 25000);
     return socket;
 }
-module.exports=getSocket;
+module.exports = getSocket;
 
 /***/ }),
 /* 2 */
@@ -192,8 +208,8 @@ class Socket {
                 });
             }
         });
-        ws.addEventListener('close',  () =>{
-            const disconnectMap = this.eventListenerMap['first-connect'];
+        ws.addEventListener('close', () => {
+            const disconnectMap = this.eventListenerMap['disconnect'];
             disconnectMap && disconnectMap.forEach((cb) => {
                 cb();
             });
@@ -204,10 +220,16 @@ class Socket {
             uid: 1,
             eventListenerMap: {},
             cbMap: {},
-            firstConnect: true
+            firstConnect: true,
+            closed:false
         });
     }
+    open(){
+        this.closed=false;
+        this.ws.open();
+    }
     close() {
+        this.closed=true;
         this.ws.close();
     }
     emit(event, data, cb) {
@@ -238,15 +260,21 @@ class Socket {
     }
     on(event, cb) {
 
-            if (!this.eventListenerMap[event]) {
-                this.eventListenerMap[event] = [];
-            }
-            this.eventListenerMap[event].push(cb);
-        
+        if (!this.eventListenerMap[event]) {
+            this.eventListenerMap[event] = [];
+        }
+        this.eventListenerMap[event].push(cb);
+
 
     }
 }
 module.exports = Socket;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+module.exports = ws;
 
 /***/ })
 /******/ ]);

@@ -1,5 +1,5 @@
 const WebSocket = require("ws");
-const Socket = require('./socket');
+const Socket = require('./src/socket');
 function createSocketIo(wsserver) {
     function on(event, cb) {
         return wsserver.on(event, function (ws) {
@@ -17,13 +17,13 @@ function createSocketIo(wsserver) {
         });
     }
     function close() {
-        try{
-            wsserver._server&&wsserver._server.close();
+        try {
+            wsserver._server && wsserver._server.close();
             wsserver.close()
-        }catch(e){
+        } catch (e) {
             console.log(e)
         }
-        
+
     }
     return {
         on,

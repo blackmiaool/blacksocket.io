@@ -1,6 +1,6 @@
 const httpServer = require('http').Server;
 const io = require('../server');
-const ioc = require('../client');
+const ioc = require('../src/client');
 const chai = require('chai');
 const expect = chai.expect;
 const testPort = 23044;
@@ -28,8 +28,8 @@ describe('server', function () {
     let server;
     let client;
     afterEach(() => {
-        server&&server.close();
-        client&&client.close();
+        server && server.close();
+        client && client.close();
     });
 
     it('should be created with a port', function (done) {
@@ -53,10 +53,10 @@ describe('server', function () {
     it('should receive a connection', function (done) {
         server = getServerWithPort();
 
-        server.on('connection', function () {            
+        server.on('connection', function () {
             setImmediate(done);
         });
-        client=getClientWithPort();
+        client = getClientWithPort();
     });
     it('should receive verious types of data', function (done) {
         server = getServerWithPort();
@@ -114,7 +114,7 @@ describe('server', function () {
             setImmediate(server.close);
         });
         client = getClientWithPort();
-        client.on('disconnect',done);
+        client.on('disconnect', done);
     });
 
 });
@@ -122,14 +122,14 @@ describe('client', function () {
     let server;
     let client;
     afterEach(() => {
-        server&&server.close();
-        client&&client.close();
+        server && server.close();
+        client && client.close();
     });
     it('should be created with a port', function (done) {
         server = io(testPort, {
             // path: '',
         });
-        client=ioc(`:${testPort}`);
+        client = ioc(`:${testPort}`);
         client.on('connect', () => {
             setImmediate(done);
         });
@@ -195,13 +195,13 @@ describe('client', function () {
         server = getServerWithPort();
 
         server.on('connection', function (socket) {
-            socket.on('disconnect',()=>{
+            socket.on('disconnect', () => {
                 done();
             });
         });
         client = getClientWithPort();
-        client.on('connect',()=>{            
-            setImmediate(()=>client.close());
+        client.on('connect', () => {
+            setImmediate(() => client.close());
         });
     });
 });
