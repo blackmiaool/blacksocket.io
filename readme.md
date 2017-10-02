@@ -65,6 +65,3 @@ socket.on('server-event', function (params, cb) {
     cb({ a: "server-event cb" });
 });
 ```
-
-
-[Client](https://github.com/blackmiaool/blacksocket.io/tree/master/demo/client/index.js)
