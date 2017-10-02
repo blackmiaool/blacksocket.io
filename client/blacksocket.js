@@ -83,6 +83,12 @@ return /******/ (function(modules) { // webpackBootstrap
 var Socket = __webpack_require__(1);
 var isBrowser = typeof location !== 'undefined';
 
+var WS = void 0;
+if (isBrowser) {
+    WS = WebSocket;
+} else {
+    WS = eval('require(\'ws\')');
+}
 function io() {
     var addr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "/";
 
@@ -99,12 +105,6 @@ function io() {
         throw new Error('invalid addr' + addr);
     }
 
-    var WS = void 0;
-    if (isBrowser) {
-        WS = WebSocket;
-    } else {
-        WS = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"ws\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-    }
     function connect(addr) {
         if (socket.closed) {
             if (checkInterval) {

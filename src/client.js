@@ -2,6 +2,12 @@
 const Socket = require('./socket');
 const isBrowser = typeof location !== 'undefined';
 
+let WS;
+if (isBrowser) {
+    WS = WebSocket;
+} else {
+    WS = eval(`require('ws')`);
+}
 function io(addr = "/") {
 
     let ws;
@@ -16,12 +22,7 @@ function io(addr = "/") {
         throw new Error('invalid addr' + addr);
     }
 
-    let WS;
-    if (isBrowser) {
-        WS = WebSocket;
-    } else {
-        WS = require('ws');
-    }
+
     function connect(addr) {
         if (socket.closed) {
             if (checkInterval) {
