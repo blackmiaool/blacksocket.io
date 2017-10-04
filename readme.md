@@ -12,6 +12,7 @@ A super simple websocket wrapper.
 * Auto reconnection
 * Object sending
 * Binary sending
+* Once
 
 ### Usage
 

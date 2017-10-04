@@ -63,6 +63,21 @@ describe('server', function () {
         });
         client = getClientWithPort();
     });
+    it('should support once', function (done) {
+        server = getServerWithPort();
+        const event2data = JSON.parse(JSON.stringify(acceptedData));
+        server.on('connection', function (socket) {
+            socket.once(eventName, () => {
+                done();
+            });
+        });
+        client = getClientWithPort();
+        client.on('connect', function () {
+            for (const name in event2data) {
+                client.emit(eventName, event2data[name]);
+            }
+        });
+    });
     it('should receive verious types of data', function (done) {
         server = getServerWithPort();
         const event2data = JSON.parse(JSON.stringify(acceptedData));

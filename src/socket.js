@@ -147,14 +147,19 @@ class Socket {
             }
         });
     }
+    once(event, cb) {
+        const wrapper = () => {
+            const list = this.eventListenerMap[event];
+            cb();
+            list.splice(list.indexOf(wrapper), 1);
+        }
+        this.on(event, wrapper);
+    }
     on(event, cb) {
-
         if (!this.eventListenerMap[event]) {
             this.eventListenerMap[event] = [];
         }
         this.eventListenerMap[event].push(cb);
-
-
     }
 }
 
