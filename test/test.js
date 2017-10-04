@@ -1,10 +1,15 @@
 const httpServer = require('http').Server;
+const chai = require('chai');
+const fs = require('fs');
+const path = require('path');
+
 const io = require('../server');
 const ioc = require('../src/client');
-const chai = require('chai');
+
 const expect = chai.expect;
 const testPort = 23044;
 const testPath = '/test';
+const binaryTestFile = path.join(__dirname, 'binary-test.jpg');
 chai.should();
 
 const eventName = 'an event';
@@ -82,6 +87,27 @@ describe('server', function () {
                 client.emit(eventName, event2data[eventName]);
             }
         });
+    });
+    it('can receive ArrayBuffer', function (done) {
+        server = getServerWithPort();
+        client = getClientWithPort();
+        server.on('connection', function (socket) {
+            socket.on(eventName, (data) => {
+                fs.readFile(binaryTestFile, function (err, buf) {
+                    buf.should.deep.equal(data);
+                    done()
+                });
+            });
+        });
+        client.on('connect', function () {
+            fs.readFile(binaryTestFile, function (err, buf) {
+                if (err) {
+                    return console.log(err);
+                }
+                client.emit(eventName, buf.buffer);
+            });
+        });
+
     });
     it('should emit data and get callback called', function (done) {
         const eventParams = { a: 1, b: 2 };

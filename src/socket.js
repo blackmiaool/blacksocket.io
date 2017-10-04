@@ -1,8 +1,29 @@
+const binaryReadyEvent = '__black_binary_ready';
+function isArrayBuffer(data) {
+    if (!data) {
+        return false;;
+    }
+    const name = Object.getPrototypeOf(data).constructor.name;
+
+    if (name === 'ArrayBuffer' || name === 'Buffer') {
+        return true;
+    } else {
+        return false;
+    }
+}
 class Socket {
     init(ws) {
         this.ws = ws;
         ws.addEventListener("message", (message) => {
-            if (!message.data || message.data[0] !== '{') {
+            let binaryData;
+            if (isArrayBuffer(message.data)) {
+                if (!this.binaryInfo) {
+                    return;
+                }
+                binaryData = message.data;
+                message.data = this.binaryInfo;
+                delete this.binaryInfo;
+            } else if (!message.data || message.data[0] !== '{') {
                 return;
             }
 
@@ -11,25 +32,41 @@ class Socket {
                 needCb,
                 data,
                 event,
-                type
+                type,
+                dataType
             } = JSON.parse(message.data);
-            if (type === "msg") {
-                if (!this.eventListenerMap[event]) {
-                    return;
-                }
-                let cb;
-                if (needCb) {
-                    cb = (data) => {
-                        this.sendCb(uid, data);
+            if (binaryData) {
+                data = binaryData;
+            }
+            switch (type) {
+                case 'msg':
+                    if (dataType === 'ArrayBuffer' && !binaryData) {
+                        this.binaryInfo = message.data;
+                        this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                        return;
                     }
-                }
-                this.eventListenerMap[event].forEach(function (listener) {
-                    listener(data, cb);
-                });
-            } else if (type === "cb") {
-                this.cbMap[uid] && this.cbMap[uid](data);
-                // just invoke it once
-                delete this.cbMap[uid];
+                    if (!this.eventListenerMap[event]) {
+                        return;
+                    }
+                    let cb;
+                    if (needCb) {
+                        cb = (data) => {
+                            this.sendCb(uid, data);
+                        }
+                    }
+                    this.eventListenerMap[event].forEach(function (listener) {
+                        listener(data, cb);
+                    });
+                    break;
+                case 'wait-binary':
+                    this.ws.send(this.binaryData);
+                    delete this.binaryData;
+                    break;
+                case "cb":
+                    this.cbMap[uid] && this.cbMap[uid](data);
+                    // just invoke it once
+                    delete this.cbMap[uid];
+                    break;
             }
         });
 
@@ -76,6 +113,11 @@ class Socket {
         this.closed = true;
         this.ws.close();
     }
+    _send(msg) {
+        if (this.ws.readyState === 1) {
+            this.ws.send(msg);
+        }
+    }
     emit(event, data, cb) {
         const msg = {};
         msg.uid = this.uid;
@@ -84,12 +126,15 @@ class Socket {
             msg.needCb = true;
             this.cbMap[msg.uid] = cb;
         }
-        msg.data = data;
+        if (isArrayBuffer(data)) {
+            msg.dataType = 'ArrayBuffer';
+            this.binaryData = data;
+        } else {
+            msg.data = data;
+        }
         msg.event = event;
         msg.type = "msg";
-        if (this.ws.readyState === 1) {
-            this.ws.send(JSON.stringify(msg));
-        }
+        this._send(JSON.stringify(msg));
     }
     sendCb(uid, data) {
         this.ws.send(JSON.stringify({
