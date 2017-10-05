@@ -11,7 +11,7 @@ A super simple websocket wrapper.
 * Callback
 * Auto reconnection
 * Object sending
-* Binary sending
+* Binary sending(even in object)
 * Once
 
 ### Usage

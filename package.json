@@ -10,7 +10,7 @@
     ],
     "scripts": {
         "test": "mocha",
-        "test-watch": "mocha --watch",
+        "test-watch": "mocha --watch --bail",
         "dev": "webpack --watch",
         "build": "gulp && webpack"
     },

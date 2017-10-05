@@ -1,7 +1,7 @@
 const binaryReadyEvent = '__black_binary_ready';
 function isArrayBuffer(data) {
     if (!data) {
-        return false;;
+        return false;
     }
     const name = Object.getPrototypeOf(data).constructor.name;
 
@@ -11,37 +11,95 @@ function isArrayBuffer(data) {
         return false;
     }
 }
+function canTraverse(data) {
+    return data && typeof data === 'object';
+}
+function getArrayBuffers(data) {
+    if (!canTraverse(data)) {
+        return null;
+    }
+
+    const ret = { paths: [], buffer: [] };
+    if (isArrayBuffer(data)) {
+        ret.paths.push([]);
+        ret.buffer.push(data);
+        return ret;
+    }
+    function traverseObj(data, path) {
+        for (const key in data) {
+            if (isArrayBuffer(data[key])) {
+                path.push(key);
+                ret.paths.push(path.slice());
+                ret.buffer.push(data[key]);
+                path.pop();
+            } else if (canTraverse(data)) {
+                path.push(key);
+                traverseObj(data[key], path);
+                path.pop();
+            }
+        }
+    }
+
+    traverseObj(data, []);
+    if (!ret.paths.length) {
+        return null;
+    }
+    return ret;
+}
+function set(root, path, data) {
+
+    if (path.includes('constructor') || path.includes('__proto__')) {
+        return;
+    }
+    if (!path[0]) {
+        return data;
+    }
+    path.reduce((p, section, i) => {
+        if (i === path.length - 1) {
+            p[section] = data;
+            return;
+        }
+        return p[section];
+    }, root);
+    return root;
+}
 class Socket {
     init(ws) {
         this.ws = ws;
         ws.addEventListener("message", (message) => {
             let binaryData;
+            let content;
             if (isArrayBuffer(message.data)) {
                 if (!this.binaryInfo) {
                     return;
                 }
                 binaryData = message.data;
-                message.data = this.binaryInfo;
-                delete this.binaryInfo;
+                content = this.binaryInfo;
             } else if (!message.data || message.data[0] !== '{') {
                 return;
             }
-
+            if (!content) {
+                content = JSON.parse(message.data);
+            }
             let {
                 uid,
                 needCb,
                 data,
                 event,
                 type,
-                dataType
-            } = JSON.parse(message.data);
+                dataType,
+                bufferPaths
+            } = content;
             if (binaryData) {
-                data = binaryData;
+                const path = bufferPaths.pop();
+
+                data = set(data, path, binaryData);
+
             }
             switch (type) {
                 case 'msg':
-                    if (dataType === 'ArrayBuffer' && !binaryData) {
-                        this.binaryInfo = message.data;
+                    if (bufferPaths && bufferPaths.length) {
+                        this.binaryInfo = content;
                         this.ws.send(JSON.stringify({ type: 'wait-binary' }));
                         return;
                     }
@@ -59,8 +117,7 @@ class Socket {
                     });
                     break;
                 case 'wait-binary':
-                    this.ws.send(this.binaryData);
-                    delete this.binaryData;
+                    this.ws.send(this.binaryData.pop());
                     break;
                 case "cb":
                     this.cbMap[uid] && this.cbMap[uid](data);
@@ -121,17 +178,19 @@ class Socket {
     emit(event, data, cb) {
         const msg = {};
         msg.uid = this.uid;
+        this.binaryData = [];
         this.uid++;
         if (cb) {
             msg.needCb = true;
             this.cbMap[msg.uid] = cb;
         }
-        if (isArrayBuffer(data)) {
-            msg.dataType = 'ArrayBuffer';
-            this.binaryData = data;
-        } else {
-            msg.data = data;
+        const arrayBuffers = getArrayBuffers(data);
+        if (arrayBuffers) {
+            msg.bufferPaths = arrayBuffers.paths;
+            this.binaryData = arrayBuffers.buffer;
         }
+        msg.data = data;
+
         msg.event = event;
         msg.type = "msg";
         this._send(JSON.stringify(msg));
