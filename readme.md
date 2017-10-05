@@ -13,6 +13,7 @@ A super simple websocket wrapper.
 * Object sending
 * Binary sending(even in object)
 * Once
+* Promise
 
 ### Usage
 

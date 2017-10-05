@@ -38,24 +38,7 @@ describe('server', function () {
         client && client.close();
     });
 
-    it('should be created with a port', function (done) {
-        server = getServerWithPort();
 
-        server.on('listening', function () {
-            done();
-        });
-    });
-
-    it('should be created with an http server', function (done) {
-        const hServer = httpServer();
-        server = io(hServer, {
-            path: testPath,
-        });
-        hServer.listen(testPort);
-        server.on('listening', function () {
-            done();
-        });
-    });
     it('should receive a connection', function (done) {
         server = getServerWithPort();
 
@@ -104,80 +87,6 @@ describe('server', function () {
             }
         });
     });
-    it('can receive ArrayBuffer', function (done) {
-        server = getServerWithPort();
-        client = getClientWithPort();
-        server.on('connection', function (socket) {
-            socket.on(eventName, (data) => {
-                fs.readFile(binaryTestFile1, function (err, buf) {
-                    buf.should.deep.equal(data);
-                    done()
-                });
-            });
-        });
-        client.on('connect', function () {
-            fs.readFile(binaryTestFile1, function (err, buf) {
-                if (err) {
-                    return console.log(err);
-                }
-                client.emit(eventName, buf.buffer);
-            });
-        });
-    });
-    it('can receive ArrayBuffer in object', function (done) {
-        server = getServerWithPort();
-        client = getClientWithPort();
-        server.on('connection', function (socket) {
-            socket.on(eventName, (data) => {
-                Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
-                    .then(([buffer1, buffer2]) => {
-                        buffer1.should.deep.equal(data.a);
-                        buffer2.should.deep.equal(data.b.c);
-                        done();
-                    });
-            });
-        });
-        client.on('connect', function () {
-            Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
-                .then(([buffer1, buffer2]) => {
-                    client.emit(eventName, { a: buffer1, b: { c: buffer2 } });
-                });
-        });
-        function getFile(file) {
-            return new Promise((resolve) => {
-                fs.readFile(file, function (err, buf) {
-                    if (err) {
-                        return console.log(err);
-                    }
-                    resolve(buf);
-                })
-            })
-        }
-    });
-    it('should emit data and get callback called', function (done) {
-        const eventParams = { a: 1, b: 2 };
-        server = getServerWithPort();
-
-        server.on('connection', function (socket) {
-            socket.emit(eventName, eventParams, (data) => {
-                for (const i in data) {
-                    data[i] /= 2;
-                }
-                data.should.deep.equal(eventParams);
-                done();
-            });
-        });
-
-        client = getClientWithPort();
-        client.on('connect', function () {
-            client.on(eventName, (data, cb) => {
-                for (const i in data) {
-                    data[i] *= 2;
-                }
-                cb(data);
-            });
-        });
-    });
     it('can be closed', function (done) {
         server = getServerWithPort();
 
@@ -186,6 +95,130 @@ describe('server', function () {
         });
         client = getClientWithPort();
         client.on('disconnect', done);
+    });
+    describe('create', function () {
+        it('should be created with a port', function (done) {
+            server = getServerWithPort();
+
+            server.on('listening', function () {
+                done();
+            });
+        });
+
+        it('should be created with an http server', function (done) {
+            const hServer = httpServer();
+            server = io(hServer, {
+                path: testPath,
+            });
+            hServer.listen(testPort);
+            server.on('listening', function () {
+                done();
+            });
+        });
+    });
+    describe('callback', function () {
+        it('should emit data and get callback called', function (done) {
+            const eventParams = { a: 1, b: 2 };
+            server = getServerWithPort();
+
+            server.on('connection', function (socket) {
+                socket.emit(eventName, eventParams, (data) => {
+                    for (const i in data) {
+                        data[i] /= 2;
+                    }
+                    data.should.deep.equal(eventParams);
+                    done();
+                });
+            });
+
+            client = getClientWithPort();
+            client.on('connect', function () {
+                client.on(eventName, (data, cb) => {
+                    for (const i in data) {
+                        data[i] *= 2;
+                    }
+                    cb(data);
+                });
+            });
+        });
+        it('should support promise', function (done) {
+            const eventParams = { a: 1, b: 2 };
+            server = getServerWithPort();
+
+            server.on('connection', function (socket) {
+                socket.emit(eventName, eventParams, true).then((data) => {
+                    for (const i in data) {
+                        data[i] /= 2;
+                    }
+                    data.should.deep.equal(eventParams);
+                    done();
+                });
+            });
+
+            client = getClientWithPort();
+            client.on('connect', function () {
+                client.on(eventName, (data, cb) => {
+                    for (const i in data) {
+                        data[i] *= 2;
+                    }
+                    cb(data);
+                });
+            });
+        });
+    });
+
+
+    describe('binary', function () {
+        it('can receive ArrayBuffer', function (done) {
+            server = getServerWithPort();
+            client = getClientWithPort();
+            server.on('connection', function (socket) {
+                socket.on(eventName, (data) => {
+                    fs.readFile(binaryTestFile1, function (err, buf) {
+                        buf.should.deep.equal(data);
+                        done()
+                    });
+                });
+            });
+            client.on('connect', function () {
+                fs.readFile(binaryTestFile1, function (err, buf) {
+                    if (err) {
+                        return console.log(err);
+                    }
+                    client.emit(eventName, buf.buffer);
+                });
+            });
+        });
+        it('can receive ArrayBuffer in object', function (done) {
+            server = getServerWithPort();
+            client = getClientWithPort();
+            server.on('connection', function (socket) {
+                socket.on(eventName, (data) => {
+                    Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
+                        .then(([buffer1, buffer2]) => {
+                            buffer1.should.deep.equal(data.a);
+                            buffer2.should.deep.equal(data.b.c);
+                            done();
+                        });
+                });
+            });
+            client.on('connect', function () {
+                Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
+                    .then(([buffer1, buffer2]) => {
+                        client.emit(eventName, { a: buffer1, b: { c: buffer2 } });
+                    });
+            });
+            function getFile(file) {
+                return new Promise((resolve) => {
+                    fs.readFile(file, function (err, buf) {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        resolve(buf);
+                    })
+                })
+            }
+        });
     });
 
 });

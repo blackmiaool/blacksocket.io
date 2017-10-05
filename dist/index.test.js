@@ -244,44 +244,140 @@ module.exports = io;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var binaryReadyEvent = '__black_binary_ready';
+function isArrayBuffer(data) {
+    if (!data) {
+        return false;
+    }
+    var name = Object.getPrototypeOf(data).constructor.name;
+
+    if (name === 'ArrayBuffer' || name === 'Buffer') {
+        return true;
+    } else {
+        return false;
+    }
+}
+function canTraverse(data) {
+    return data && (typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object';
+}
+function getArrayBuffers(data) {
+    if (!canTraverse(data)) {
+        return null;
+    }
+
+    var ret = { paths: [], buffer: [] };
+    if (isArrayBuffer(data)) {
+        ret.paths.push([]);
+        ret.buffer.push(data);
+        return ret;
+    }
+    function traverseObj(data, path) {
+        for (var key in data) {
+            if (isArrayBuffer(data[key])) {
+                path.push(key);
+                ret.paths.push(path.slice());
+                ret.buffer.push(data[key]);
+                path.pop();
+            } else if (canTraverse(data)) {
+                path.push(key);
+                traverseObj(data[key], path);
+                path.pop();
+            }
+        }
+    }
+
+    traverseObj(data, []);
+    if (!ret.paths.length) {
+        return null;
+    }
+    return ret;
+}
+function set(root, path, data) {
+
+    if (path.includes('constructor') || path.includes('__proto__')) {
+        return;
+    }
+    if (!path[0]) {
+        return data;
+    }
+    path.reduce(function (p, section, i) {
+        if (i === path.length - 1) {
+            p[section] = data;
+            return;
+        }
+        return p[section];
+    }, root);
+    return root;
+}
 
 var Socket = function () {
     _createClass(Socket, [{
-        key: "init",
+        key: 'init',
         value: function init(ws) {
             var _this = this;
 
             this.ws = ws;
             ws.addEventListener("message", function (message) {
-                if (!message.data || message.data[0] !== '{') {
-                    return;
-                }
-
-                var _JSON$parse = JSON.parse(message.data),
-                    uid = _JSON$parse.uid,
-                    needCb = _JSON$parse.needCb,
-                    data = _JSON$parse.data,
-                    event = _JSON$parse.event,
-                    type = _JSON$parse.type;
-
-                if (type === "msg") {
-                    if (!_this.eventListenerMap[event]) {
+                var binaryData = void 0;
+                var content = void 0;
+                if (isArrayBuffer(message.data)) {
+                    if (!_this.binaryInfo) {
                         return;
                     }
-                    var cb = void 0;
-                    if (needCb) {
-                        cb = function cb(data) {
-                            _this.sendCb(uid, data);
-                        };
-                    }
-                    _this.eventListenerMap[event].forEach(function (listener) {
-                        listener(data, cb);
-                    });
-                } else if (type === "cb") {
-                    _this.cbMap[uid] && _this.cbMap[uid](data);
-                    // just invoke it once
-                    delete _this.cbMap[uid];
+                    binaryData = message.data;
+                    content = _this.binaryInfo;
+                } else if (!message.data || message.data[0] !== '{') {
+                    return;
+                }
+                if (!content) {
+                    content = JSON.parse(message.data);
+                }
+                var _content = content,
+                    uid = _content.uid,
+                    needCb = _content.needCb,
+                    data = _content.data,
+                    event = _content.event,
+                    type = _content.type,
+                    dataType = _content.dataType,
+                    bufferPaths = _content.bufferPaths;
+
+                if (binaryData) {
+                    var path = bufferPaths.pop();
+
+                    data = set(data, path, binaryData);
+                }
+                switch (type) {
+                    case 'msg':
+                        if (bufferPaths && bufferPaths.length) {
+                            _this.binaryInfo = content;
+                            _this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                            return;
+                        }
+                        if (!_this.eventListenerMap[event]) {
+                            return;
+                        }
+                        var cb = void 0;
+                        if (needCb) {
+                            cb = function cb(data) {
+                                _this.sendCb(uid, data);
+                            };
+                        }
+                        _this.eventListenerMap[event].forEach(function (listener) {
+                            listener(data, cb);
+                        });
+                        break;
+                    case 'wait-binary':
+                        _this.ws.send(_this.binaryData.pop());
+                        break;
+                    case "cb":
+                        _this.cbMap[uid] && _this.cbMap[uid](data);
+                        // just invoke it once
+                        delete _this.cbMap[uid];
+                        break;
                 }
             });
 
@@ -325,36 +421,48 @@ var Socket = function () {
     }
 
     _createClass(Socket, [{
-        key: "open",
+        key: 'open',
         value: function open() {
             this.closed = false;
             this.ws.open();
         }
     }, {
-        key: "close",
+        key: 'close',
         value: function close() {
             this.closed = true;
             this.ws.close();
         }
     }, {
-        key: "emit",
+        key: '_send',
+        value: function _send(msg) {
+            if (this.ws.readyState === 1) {
+                this.ws.send(msg);
+            }
+        }
+    }, {
+        key: 'emit',
         value: function emit(event, data, cb) {
             var msg = {};
             msg.uid = this.uid;
+            this.binaryData = [];
             this.uid++;
             if (cb) {
                 msg.needCb = true;
                 this.cbMap[msg.uid] = cb;
             }
+            var arrayBuffers = getArrayBuffers(data);
+            if (arrayBuffers) {
+                msg.bufferPaths = arrayBuffers.paths;
+                this.binaryData = arrayBuffers.buffer;
+            }
             msg.data = data;
+
             msg.event = event;
             msg.type = "msg";
-            if (this.ws.readyState === 1) {
-                this.ws.send(JSON.stringify(msg));
-            }
+            this._send(JSON.stringify(msg));
         }
     }, {
-        key: "sendCb",
+        key: 'sendCb',
         value: function sendCb(uid, data) {
             this.ws.send(JSON.stringify({
                 type: "cb",
@@ -367,9 +475,20 @@ var Socket = function () {
             });
         }
     }, {
-        key: "on",
-        value: function on(event, cb) {
+        key: 'once',
+        value: function once(event, cb) {
+            var _this2 = this;
 
+            var wrapper = function wrapper() {
+                var list = _this2.eventListenerMap[event];
+                cb();
+                list.splice(list.indexOf(wrapper), 1);
+            };
+            this.on(event, wrapper);
+        }
+    }, {
+        key: 'on',
+        value: function on(event, cb) {
             if (!this.eventListenerMap[event]) {
                 this.eventListenerMap[event] = [];
             }

@@ -177,12 +177,24 @@ class Socket {
     }
     emit(event, data, cb) {
         const msg = {};
+        let ret;
         msg.uid = this.uid;
         this.binaryData = [];
         this.uid++;
         if (cb) {
             msg.needCb = true;
-            this.cbMap[msg.uid] = cb;
+            if (cb === true) {
+                ret = new Promise((resolve) => {
+                    this.cbMap[msg.uid] = function (result) {
+                        resolve(result);
+                    }
+                });
+            } else if (typeof cb === 'function') {
+                this.cbMap[msg.uid] = cb;
+            } else {
+                console.warn('expect a function or a true as the third parameter');
+                return;
+            }
         }
         const arrayBuffers = getArrayBuffers(data);
         if (arrayBuffers) {
@@ -194,6 +206,7 @@ class Socket {
         msg.event = event;
         msg.type = "msg";
         this._send(JSON.stringify(msg));
+        return ret;
     }
     sendCb(uid, data) {
         this.ws.send(JSON.stringify({
