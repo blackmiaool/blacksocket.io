@@ -350,11 +350,17 @@ var Socket = function () {
 
                     data = set(data, path, binaryData);
                 }
+                var checkBinaryBuffer = function checkBinaryBuffer() {
+                    if (bufferPaths && bufferPaths.length) {
+                        _this.binaryInfo = content;
+                        _this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                        return true;
+                    }
+                    return false;
+                };
                 switch (type) {
                     case 'msg':
-                        if (bufferPaths && bufferPaths.length) {
-                            _this.binaryInfo = content;
-                            _this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                        if (checkBinaryBuffer()) {
                             return;
                         }
                         if (!_this.eventListenerMap[event]) {
@@ -374,6 +380,9 @@ var Socket = function () {
                         _this.ws.send(_this.binaryData.pop());
                         break;
                     case "cb":
+                        if (checkBinaryBuffer()) {
+                            return;
+                        }
                         _this.cbMap[uid] && _this.cbMap[uid](data);
                         // just invoke it once
                         delete _this.cbMap[uid];
@@ -444,11 +453,18 @@ var Socket = function () {
         value: function emit(event, data, cb) {
             var _this2 = this;
 
+            var extra = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+            //extra is not for user
             var msg = {};
             var ret = void 0;
-            msg.uid = this.uid;
             this.binaryData = [];
-            this.uid++;
+            if (extra.cb) {
+                msg.uid = extra.uid;
+            } else {
+                msg.uid = this.uid;
+                this.uid++;
+            }
+
             if (cb) {
                 msg.needCb = true;
                 if (cb === true) {
@@ -472,22 +488,26 @@ var Socket = function () {
             msg.data = data;
 
             msg.event = event;
-            msg.type = "msg";
+            if (extra.cb) {
+                msg.type = "cb";
+            } else {
+                msg.type = "msg";
+            }
             this._send(JSON.stringify(msg));
             return ret;
         }
     }, {
         key: 'sendCb',
         value: function sendCb(uid, data) {
-            this.ws.send(JSON.stringify({
-                type: "cb",
-                uid: uid,
-                data: data
-            }), function (err) {
-                if (err) {
-                    console.warn('err', err);
-                }
+            this.emit(false, data, false, {
+                cb: true,
+                uid: uid
             });
+            // this._send(JSON.stringify({
+            //     type: "cb",
+            //     uid,
+            //     data
+            // }));
         }
     }, {
         key: 'once',

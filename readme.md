@@ -17,6 +17,8 @@ A super simple websocket wrapper.
 
 ### Usage
 
+I have no time for writing a whole documentation for it. If you want to use it, I personally recommend you to read the test/test.js file to get all the demos.
+
 #### Server
 
 ```javascript
