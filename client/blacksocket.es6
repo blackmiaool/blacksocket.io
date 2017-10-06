@@ -96,11 +96,17 @@ class Socket {
                 data = set(data, path, binaryData);
 
             }
+            const checkBinaryBuffer = () => {
+                if (bufferPaths && bufferPaths.length) {
+                    this.binaryInfo = content;
+                    this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                    return true;
+                }
+                return false;
+            }
             switch (type) {
                 case 'msg':
-                    if (bufferPaths && bufferPaths.length) {
-                        this.binaryInfo = content;
-                        this.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                    if (checkBinaryBuffer()) {
                         return;
                     }
                     if (!this.eventListenerMap[event]) {
@@ -120,6 +126,9 @@ class Socket {
                     this.ws.send(this.binaryData.pop());
                     break;
                 case "cb":
+                    if (checkBinaryBuffer()) {
+                        return;
+                    }
                     this.cbMap[uid] && this.cbMap[uid](data);
                     // just invoke it once
                     delete this.cbMap[uid];
@@ -175,12 +184,17 @@ class Socket {
             this.ws.send(msg);
         }
     }
-    emit(event, data, cb) {
+    emit(event, data, cb, extra = {}) {//extra is not for user
         const msg = {};
         let ret;
-        msg.uid = this.uid;
         this.binaryData = [];
-        this.uid++;
+        if (extra.cb) {
+            msg.uid = extra.uid;
+        } else {
+            msg.uid = this.uid;
+            this.uid++;
+        }
+
         if (cb) {
             msg.needCb = true;
             if (cb === true) {
@@ -204,20 +218,25 @@ class Socket {
         msg.data = data;
 
         msg.event = event;
-        msg.type = "msg";
+        if (extra.cb) {
+            msg.type = "cb";
+        } else {
+            msg.type = "msg";
+        }
         this._send(JSON.stringify(msg));
         return ret;
     }
+
     sendCb(uid, data) {
-        this.ws.send(JSON.stringify({
-            type: "cb",
-            uid,
-            data
-        }), function (err) {
-            if (err) {
-                console.warn('err', err);
-            }
+        this.emit(false, data, false, {
+            cb: true,
+            uid
         });
+        // this._send(JSON.stringify({
+        //     type: "cb",
+        //     uid,
+        //     data
+        // }));
     }
     once(event, cb) {
         const wrapper = () => {

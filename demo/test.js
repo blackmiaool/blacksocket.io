@@ -189,6 +189,29 @@ describe('server', function () {
                 });
             });
         });
+        it('can receive ArrayBuffer in callback', function (done) {
+            server = getServerWithPort();
+            client = getClientWithPort();
+            server.on('connection', function (socket) {
+                socket.emit(eventName, {}, (data) => {
+                    fs.readFile(binaryTestFile1, function (err, buf) {
+                        buf.should.deep.equal(data.hey);
+                        done()
+                    });
+                });
+            });
+            client.on('connect', function () {
+                client.on(eventName, (data, cb) => {
+                    fs.readFile(binaryTestFile1, function (err, buf) {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        cb({ hey: buf.buffer });
+                    });
+                });
+
+            });
+        });
         it('can receive ArrayBuffer in object', function (done) {
             server = getServerWithPort();
             client = getClientWithPort();
