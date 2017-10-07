@@ -1,6 +1,6 @@
 # blacksocket.io
 
-A super simple websocket wrapper.
+A websocket wrapper. Basically compatiable with socket.io.
 
 [![Travis](https://travis-ci.org/blackmiaool/blacksocket.io.svg?branch=master)](https://travis-ci.org/blackmiaool/blacksocket.io)
 [![NPM version](https://badge.fury.io/js/blacksocket.io.svg)](https://www.npmjs.com/package/blacksocket.io)
@@ -14,6 +14,24 @@ A super simple websocket wrapper.
 * Binary sending (even in object) (even in callback) 
 * Once
 * Promise
+
+### Install 
+
+#### Server 
+```bash
+npm i -S blacksocket.io
+```
+#### Client 
+
+##### Install with npm 
+```bash
+npm i -S blacksocket.io
+```
+##### Use script file directly 
+Just for testing
+```bash
+<script src="https://raw.githubusercontent.com/blackmiaool/blacksocket.io/master/client/blacksocket.min.js"></script>
+```
 
 ### Usage
 
