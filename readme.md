@@ -29,7 +29,7 @@ npm i -S blacksocket.io
 ```
 ##### Use script file directly 
 Just for testing
-```bash
+```html
 <script src="https://raw.githubusercontent.com/blackmiaool/blacksocket.io/master/client/blacksocket.min.js"></script>
 ```
 
