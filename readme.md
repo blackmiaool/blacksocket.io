@@ -3,7 +3,7 @@
 A websocket wrapper. Basically compatiable with socket.io.
 
 [![Travis](https://travis-ci.org/blackmiaool/blacksocket.io.svg?branch=master)](https://travis-ci.org/blackmiaool/blacksocket.io)
-[![NPM version](https://badge.fury.io/js/blacksocket.io.svg)](https://www.npmjs.com/package/blacksocket.io)
+[![NPM version](https://img.shields.io/npm/v/blacksocket.io.svg)](https://www.npmjs.com/package/blacksocket.io)
 
 
 
@@ -61,7 +61,7 @@ io.on('connection', function (socket) {
 });
 ```
 
-#### Client(nodejs or browser)
+#### Client (nodejs or browser)
 
 ```javascript
 const io = require("blacksocket.io/client");
