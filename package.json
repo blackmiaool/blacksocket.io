@@ -1,6 +1,6 @@
 {
     "name": "blacksocket.io",
-    "version": "1.0.21",
+    "version": "1.0.22",
     "description": "",
     "main": "server.js",
     "files": [
@@ -33,6 +33,7 @@
         "babel-preset-env": "^1.6.0",
         "chai": "^4.1.2",
         "concat-with-sourcemaps": "^1.0.4",
+        "fs-extra": "^4.0.2",
         "gulp": "^3.9.1",
         "gulp-replace": "^0.6.1",
         "mocha": "^3.5.3",
