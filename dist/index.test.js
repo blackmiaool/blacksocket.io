@@ -269,10 +269,10 @@ function getArrayBuffers(data) {
         return null;
     }
 
-    var ret = { paths: [], buffer: [] };
+    var ret = { paths: [], buffers: [] };
     if (isArrayBuffer(data)) {
         ret.paths.push([]);
-        ret.buffer.push(data);
+        ret.buffers.push(data);
         return ret;
     }
     function traverseObj(data, path) {
@@ -280,7 +280,7 @@ function getArrayBuffers(data) {
             if (isArrayBuffer(data[key])) {
                 path.push(key);
                 ret.paths.push(path.slice());
-                ret.buffer.push(data[key]);
+                ret.buffers.push(data[key]);
                 path.pop();
             } else if (canTraverse(data)) {
                 path.push(key);
@@ -321,6 +321,8 @@ var Socket = function () {
             var _this = this;
 
             this.ws = ws;
+            this.binaryData = [];
+            this.binaryMsgQueue = [];
             ws.addEventListener("message", function (message) {
                 var binaryData = void 0;
                 var content = void 0;
@@ -378,6 +380,9 @@ var Socket = function () {
                         break;
                     case 'wait-binary':
                         _this.ws.send(_this.binaryData.pop());
+                        if (!_this.binaryData.length && _this.binaryMsgQueue.length) {
+                            _this.emit.apply(_this, _this.binaryMsgQueue.shift());
+                        }
                         break;
                     case "cb":
                         if (checkBinaryBuffer()) {
@@ -446,6 +451,8 @@ var Socket = function () {
         value: function _send(msg) {
             if (this.ws.readyState === 1) {
                 this.ws.send(msg);
+            } else {
+                console.log('bug: not ready');
             }
         }
     }, {
@@ -455,6 +462,16 @@ var Socket = function () {
 
             var extra = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
             //extra is not for user
+            if (this.binaryData.length || this.binaryMsgQueue.length) {
+                var _ret = void 0;
+                if (cb === true) {
+                    _ret = new Promise(function (resolve) {
+                        cb = resolve;
+                    });
+                }
+                this.binaryMsgQueue.push([event, data, cb, extra]);
+                return _ret;
+            }
             var msg = {};
             var ret = void 0;
             this.binaryData = [];
@@ -466,6 +483,7 @@ var Socket = function () {
             }
 
             if (cb) {
+
                 msg.needCb = true;
                 if (cb === true) {
                     ret = new Promise(function (resolve) {
@@ -483,7 +501,7 @@ var Socket = function () {
             var arrayBuffers = getArrayBuffers(data);
             if (arrayBuffers) {
                 msg.bufferPaths = arrayBuffers.paths;
-                this.binaryData = arrayBuffers.buffer;
+                this.binaryData = arrayBuffers.buffers;
             }
             msg.data = data;
 
@@ -493,6 +511,7 @@ var Socket = function () {
             } else {
                 msg.type = "msg";
             }
+
             this._send(JSON.stringify(msg));
             return ret;
         }

@@ -187,12 +187,13 @@ class Socket {
     _send(msg) {
         if (this.ws.readyState === 1) {
             this.ws.send(msg);
-        } else {
-            console.log('bug: not ready');
         }
+        //  else {
+        //     console.log('bug: not ready', this.ws.readyState);
+        // }
     }
     emit(event, data, cb, extra = {}) {//extra is not for user
-        if (this.binaryData.length || this.binaryMsgQueue.length) {
+        if (this.binaryData.length) {
             let ret;
             if (cb === true) {
                 ret = new Promise((resolve) => {
@@ -213,7 +214,6 @@ class Socket {
         }
 
         if (cb) {
-
             msg.needCb = true;
             if (cb === true) {
                 ret = new Promise((resolve) => {
@@ -241,7 +241,6 @@ class Socket {
         } else {
             msg.type = "msg";
         }
-
         this._send(JSON.stringify(msg));
         return ret;
     }
@@ -251,11 +250,6 @@ class Socket {
             cb: true,
             uid
         });
-        // this._send(JSON.stringify({
-        //     type: "cb",
-        //     uid,
-        //     data
-        // }));
     }
     once(event, cb) {
         const wrapper = () => {

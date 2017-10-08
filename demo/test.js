@@ -254,6 +254,10 @@ describe('server', function () {
                                     result.should.equal(true);
                                     resolve();
                                 });
+                                client.emit("b", buffer2, true).then((result) => {
+                                    result.should.equal(true);
+                                    resolve();
+                                });
                             }),
                         ]).then(() => done());
                     });
