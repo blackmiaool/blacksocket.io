@@ -1,6 +1,6 @@
 const httpServer = require('http').Server;
 const chai = require('chai');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const io = require('../server');
@@ -30,6 +30,7 @@ const acceptedData = {
     e: ['b', { e: 3 }, 5],
     f: null
 }
+
 describe('server', function () {
     let server;
     let client;
@@ -173,41 +174,31 @@ describe('server', function () {
             server = getServerWithPort();
             client = getClientWithPort();
             server.on('connection', function (socket) {
-                socket.on(eventName, (data) => {
-                    fs.readFile(binaryTestFile1, function (err, buf) {
-                        buf.should.deep.equal(data);
-                        done()
-                    });
+                socket.on(eventName, async (data) => {
+                    const buf = await fs.readFile(binaryTestFile1);
+                    buf.should.deep.equal(data);
+                    done();
                 });
             });
-            client.on('connect', function () {
-                fs.readFile(binaryTestFile1, function (err, buf) {
-                    if (err) {
-                        return console.log(err);
-                    }
-                    client.emit(eventName, buf.buffer);
-                });
+            client.on('connect', async function () {
+                const buf = await fs.readFile(binaryTestFile1);
+                client.emit(eventName, buf.buffer);
             });
         });
         it('can receive ArrayBuffer in callback', function (done) {
             server = getServerWithPort();
             client = getClientWithPort();
             server.on('connection', function (socket) {
-                socket.emit(eventName, {}, (data) => {
-                    fs.readFile(binaryTestFile1, function (err, buf) {
-                        buf.should.deep.equal(data.hey);
-                        done()
-                    });
+                socket.emit(eventName, {}, async (data) => {
+                    const buf = await fs.readFile(binaryTestFile1);
+                    buf.should.deep.equal(data.hey);
+                    done()
                 });
             });
             client.on('connect', function () {
-                client.on(eventName, (data, cb) => {
-                    fs.readFile(binaryTestFile1, function (err, buf) {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        cb({ hey: buf.buffer });
-                    });
+                client.on(eventName, async (data, cb) => {
+                    const buf = await fs.readFile(binaryTestFile1);
+                    cb({ hey: buf.buffer });
                 });
 
             });
@@ -217,7 +208,7 @@ describe('server', function () {
             client = getClientWithPort();
             server.on('connection', function (socket) {
                 socket.on(eventName, (data) => {
-                    Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
+                    Promise.all([fs.readFile(binaryTestFile1), fs.readFile(binaryTestFile2)])
                         .then(([buffer1, buffer2]) => {
                             buffer1.should.deep.equal(data.a);
                             buffer2.should.deep.equal(data.b.c);
@@ -226,21 +217,47 @@ describe('server', function () {
                 });
             });
             client.on('connect', function () {
-                Promise.all([getFile(binaryTestFile1), getFile(binaryTestFile2)])
+                Promise.all([fs.readFile(binaryTestFile1), fs.readFile(binaryTestFile2)])
                     .then(([buffer1, buffer2]) => {
                         client.emit(eventName, { a: buffer1, b: { c: buffer2 } });
                     });
             });
-            function getFile(file) {
-                return new Promise((resolve) => {
-                    fs.readFile(file, function (err, buf) {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        resolve(buf);
-                    })
-                })
-            }
+
+        });
+        it('can buffer parallel ArrayBuffer', function (done) {
+            server = getServerWithPort();
+            client = getClientWithPort();
+            server.on('connection', function (socket) {
+                socket.on("a", async (data, cb) => {
+                    const buffer1 = await fs.readFile(binaryTestFile1);
+                    buffer1.should.deep.equal(data);
+                    cb(true);
+                });
+                socket.on("b", async (data, cb) => {
+                    const buffer2 = await fs.readFile(binaryTestFile2);
+                    buffer2.should.deep.equal(data);
+                    cb(true);
+                });
+            });
+            client.on('connect', function () {
+                Promise.all([fs.readFile(binaryTestFile1), fs.readFile(binaryTestFile2)])
+                    .then(([buffer1, buffer2]) => {
+                        Promise.all([
+                            new Promise(function (resolve) {
+                                client.emit("a", buffer1, true).then((result) => {
+                                    result.should.equal(true);
+                                    resolve();
+                                });
+                            }),
+                            new Promise(function (resolve) {
+                                client.emit("b", buffer2, true).then((result) => {
+                                    result.should.equal(true);
+                                    resolve();
+                                });
+                            }),
+                        ]).then(() => done());
+                    });
+            });
         });
     });
 

@@ -19,10 +19,10 @@ function getArrayBuffers(data) {
         return null;
     }
 
-    const ret = { paths: [], buffer: [] };
+    const ret = { paths: [], buffers: [] };
     if (isArrayBuffer(data)) {
         ret.paths.push([]);
-        ret.buffer.push(data);
+        ret.buffers.push(data);
         return ret;
     }
     function traverseObj(data, path) {
@@ -30,7 +30,7 @@ function getArrayBuffers(data) {
             if (isArrayBuffer(data[key])) {
                 path.push(key);
                 ret.paths.push(path.slice());
-                ret.buffer.push(data[key]);
+                ret.buffers.push(data[key]);
                 path.pop();
             } else if (canTraverse(data)) {
                 path.push(key);
@@ -66,6 +66,8 @@ function set(root, path, data) {
 class Socket {
     init(ws) {
         this.ws = ws;
+        this.binaryData = [];
+        this.binaryMsgQueue = [];
         ws.addEventListener("message", (message) => {
             let binaryData;
             let content;
@@ -124,6 +126,9 @@ class Socket {
                     break;
                 case 'wait-binary':
                     this.ws.send(this.binaryData.pop());
+                    if (!this.binaryData.length && this.binaryMsgQueue.length) {
+                        this.emit.apply(this, this.binaryMsgQueue.shift());
+                    }
                     break;
                 case "cb":
                     if (checkBinaryBuffer()) {
@@ -182,9 +187,21 @@ class Socket {
     _send(msg) {
         if (this.ws.readyState === 1) {
             this.ws.send(msg);
+        } else {
+            console.log('bug: not ready');
         }
     }
     emit(event, data, cb, extra = {}) {//extra is not for user
+        if (this.binaryData.length || this.binaryMsgQueue.length) {
+            let ret;
+            if (cb === true) {
+                ret = new Promise((resolve) => {
+                    cb = resolve;
+                });
+            }
+            this.binaryMsgQueue.push([event, data, cb, extra]);
+            return ret;
+        }
         const msg = {};
         let ret;
         this.binaryData = [];
@@ -196,6 +213,7 @@ class Socket {
         }
 
         if (cb) {
+
             msg.needCb = true;
             if (cb === true) {
                 ret = new Promise((resolve) => {
@@ -213,7 +231,7 @@ class Socket {
         const arrayBuffers = getArrayBuffers(data);
         if (arrayBuffers) {
             msg.bufferPaths = arrayBuffers.paths;
-            this.binaryData = arrayBuffers.buffer;
+            this.binaryData = arrayBuffers.buffers;
         }
         msg.data = data;
 
@@ -223,6 +241,7 @@ class Socket {
         } else {
             msg.type = "msg";
         }
+
         this._send(JSON.stringify(msg));
         return ret;
     }
