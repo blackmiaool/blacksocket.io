@@ -121,7 +121,7 @@ class Socket {
                         }
                     }
                     this.eventListenerMap[event].forEach(function (listener) {
-                        listener(data, cb);
+                        listener(...data, cb);
                     });
                     break;
                 case 'wait-binary':
@@ -134,7 +134,7 @@ class Socket {
                     if (checkBinaryBuffer()) {
                         return;
                     }
-                    this.cbMap[uid] && this.cbMap[uid](data);
+                    this.cbMap[uid] && this.cbMap[uid](...data);
                     // just invoke it once
                     delete this.cbMap[uid];
                     break;
@@ -192,15 +192,33 @@ class Socket {
         //     console.log('bug: not ready', this.ws.readyState);
         // }
     }
-    emit(event, data, cb, extra = {}) {//extra is not for user
+    emit(event, ...data) {//extra is not for user
+        const originalEvent = event;
+        let cb;
+        if (typeof data[data.length - 1] === 'function') {
+            cb = data.pop();
+        }
+        let extra = {};
+        let promise = false;
+        if (typeof event === 'object') {
+            extra = event;
+            promise = event.promise;
+            event = event.event;
+        }
+
         if (this.binaryData.length) {
             let ret;
-            if (cb === true) {
+            if (promise) {
                 ret = new Promise((resolve) => {
                     cb = resolve;
                 });
             }
-            this.binaryMsgQueue.push([event, data, cb, extra]);
+            const args = [originalEvent, ...data];
+            if (cb) {
+                args.push(cb);
+            }
+            delete originalEvent.promise;
+            this.binaryMsgQueue.push(args);
             return ret;
         }
         const msg = {};
@@ -213,9 +231,9 @@ class Socket {
             this.uid++;
         }
 
-        if (cb) {
+        if (cb || promise) {
             msg.needCb = true;
-            if (cb === true) {
+            if (promise) {
                 ret = new Promise((resolve) => {
                     this.cbMap[msg.uid] = function (result) {
                         resolve(result);
@@ -242,14 +260,14 @@ class Socket {
             msg.type = "msg";
         }
         this._send(JSON.stringify(msg));
+
         return ret;
     }
-
     sendCb(uid, data) {
-        this.emit(false, data, false, {
+        this.emit({
             cb: true,
             uid
-        });
+        }, data);
     }
     once(event, cb) {
         const wrapper = () => {

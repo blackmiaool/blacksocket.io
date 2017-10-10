@@ -451,9 +451,10 @@ var Socket = function () {
         value: function _send(msg) {
             if (this.ws.readyState === 1) {
                 this.ws.send(msg);
-            } else {
-                console.log('bug: not ready');
             }
+            //  else {
+            //     console.log('bug: not ready', this.ws.readyState);
+            // }
         }
     }, {
         key: 'emit',
@@ -462,7 +463,7 @@ var Socket = function () {
 
             var extra = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
             //extra is not for user
-            if (this.binaryData.length || this.binaryMsgQueue.length) {
+            if (this.binaryData.length) {
                 var _ret = void 0;
                 if (cb === true) {
                     _ret = new Promise(function (resolve) {
@@ -483,7 +484,6 @@ var Socket = function () {
             }
 
             if (cb) {
-
                 msg.needCb = true;
                 if (cb === true) {
                     ret = new Promise(function (resolve) {
@@ -511,7 +511,6 @@ var Socket = function () {
             } else {
                 msg.type = "msg";
             }
-
             this._send(JSON.stringify(msg));
             return ret;
         }
@@ -522,11 +521,6 @@ var Socket = function () {
                 cb: true,
                 uid: uid
             });
-            // this._send(JSON.stringify({
-            //     type: "cb",
-            //     uid,
-            //     data
-            // }));
         }
     }, {
         key: 'once',

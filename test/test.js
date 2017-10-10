@@ -31,6 +31,11 @@ const acceptedData = {
     f: null
 }
 
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at:', p, 'reason:', reason);
+    // application specific logging, throwing an error, or other logic here
+});
+
 describe('server', function () {
     let server;
     let client;
@@ -61,6 +66,24 @@ describe('server', function () {
             for (const name in event2data) {
                 client.emit(eventName, event2data[name]);
             }
+        });
+    });
+    it('should support multiple arguments', function (done) {
+        server = getServerWithPort();
+        const event2data = JSON.parse(JSON.stringify(acceptedData));
+        server.on('connection', function (socket) {
+            socket.on(eventName, (a, b, c, cb) => {
+                a.should.equal(1);
+                b.should.equal(2);
+                c.should.equal(3);
+                cb();
+            });
+        });
+        client = getClientWithPort();
+        client.on('connect', function () {
+            client.emit(eventName, 1, 2, 3, () => {
+                done();
+            });
         });
     });
     it('should receive verious types of data', function (done) {
@@ -147,7 +170,7 @@ describe('server', function () {
             server = getServerWithPort();
 
             server.on('connection', function (socket) {
-                socket.emit(eventName, eventParams, true).then((data) => {
+                socket.emit({ event: eventName, promise: true }, eventParams).then((data) => {
                     for (const i in data) {
                         data[i] /= 2;
                     }
@@ -244,17 +267,17 @@ describe('server', function () {
                     .then(([buffer1, buffer2]) => {
                         Promise.all([
                             new Promise(function (resolve) {
-                                client.emit("a", buffer1, true).then((result) => {
+                                client.emit({ event: "a", promise: true }, buffer1.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
                             }),
                             new Promise(function (resolve) {
-                                client.emit("b", buffer2, true).then((result) => {
+                                client.emit({ event: "b", promise: true }, buffer2.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
-                                client.emit("b", buffer2, true).then((result) => {
+                                client.emit({ event: "b", promise: true }, buffer2.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
