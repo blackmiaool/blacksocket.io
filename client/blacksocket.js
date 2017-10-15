@@ -290,7 +290,11 @@ var Socket = function () {
                             };
                         }
                         _this.eventListenerMap[event].forEach(function (listener) {
-                            listener.apply(undefined, _toConsumableArray(data).concat([cb]));
+                            var ret = void 0;
+                            ret = listener.apply(undefined, _toConsumableArray(data).concat([cb]));
+                            if (ret && ret.then && cb) {
+                                ret.then(cb);
+                            }
                         });
                         break;
                     case 'wait-binary':

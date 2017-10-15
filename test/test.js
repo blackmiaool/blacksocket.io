@@ -169,14 +169,14 @@ describe('server', function () {
             const eventParams = { a: 1, b: 2 };
             server = getServerWithPort();
 
-            server.on('connection', function (socket) {
-                socket.emit({ event: eventName, promise: true }, eventParams).then((data) => {
-                    for (const i in data) {
-                        data[i] /= 2;
-                    }
-                    data.should.deep.equal(eventParams);
-                    done();
-                });
+            server.on('connection', async function (socket) {
+                const data = await socket.emit({ event: eventName, promise: true }, eventParams);
+                for (const i in data) {
+                    data[i] /= 2;
+                }
+                data.should.deep.equal(eventParams);
+                done();
+
             });
 
             client = getClientWithPort();
@@ -186,6 +186,34 @@ describe('server', function () {
                         data[i] *= 2;
                     }
                     cb(data);
+                });
+            });
+        });
+        it('callback supports promise', function (done) {
+            const eventParams = { a: 1, b: 2 };
+            server = getServerWithPort();
+
+            server.on('connection', async function (socket) {
+                const data = await socket.emit({ event: eventName, promise: true }, eventParams);
+                for (const i in data) {
+                    data[i] /= 2;
+                }
+                data.should.deep.equal(eventParams);
+                done();
+
+            });
+
+            client = getClientWithPort();
+            client.on('connect', function () {
+                client.on(eventName, (data) => {
+                    return new Promise((resolve) => {
+                        for (const i in data) {
+                            data[i] *= 2;
+                        }
+                        setTimeout(() => {
+                            resolve(data);
+                        }, 10);
+                    });
                 });
             });
         });

@@ -246,6 +246,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var binaryReadyEvent = '__black_binary_ready';
@@ -324,6 +326,8 @@ var Socket = function () {
             this.binaryData = [];
             this.binaryMsgQueue = [];
             ws.addEventListener("message", function (message) {
+                var _cbMap;
+
                 var binaryData = void 0;
                 var content = void 0;
                 if (isArrayBuffer(message.data)) {
@@ -375,7 +379,7 @@ var Socket = function () {
                             };
                         }
                         _this.eventListenerMap[event].forEach(function (listener) {
-                            listener(data, cb);
+                            listener.apply(undefined, _toConsumableArray(data).concat([cb]));
                         });
                         break;
                     case 'wait-binary':
@@ -388,7 +392,7 @@ var Socket = function () {
                         if (checkBinaryBuffer()) {
                             return;
                         }
-                        _this.cbMap[uid] && _this.cbMap[uid](data);
+                        _this.cbMap[uid] && (_cbMap = _this.cbMap)[uid].apply(_cbMap, _toConsumableArray(data));
                         // just invoke it once
                         delete _this.cbMap[uid];
                         break;
@@ -458,19 +462,41 @@ var Socket = function () {
         }
     }, {
         key: 'emit',
-        value: function emit(event, data, cb) {
+        value: function emit(event) {
             var _this2 = this;
 
-            var extra = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
             //extra is not for user
+            var originalEvent = event;
+            var cb = void 0;
+
+            for (var _len = arguments.length, data = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                data[_key - 1] = arguments[_key];
+            }
+
+            if (typeof data[data.length - 1] === 'function') {
+                cb = data.pop();
+            }
+            var extra = {};
+            var promise = false;
+            if ((typeof event === 'undefined' ? 'undefined' : _typeof(event)) === 'object') {
+                extra = event;
+                promise = event.promise;
+                event = event.event;
+            }
+
             if (this.binaryData.length) {
                 var _ret = void 0;
-                if (cb === true) {
+                if (promise) {
                     _ret = new Promise(function (resolve) {
                         cb = resolve;
                     });
                 }
-                this.binaryMsgQueue.push([event, data, cb, extra]);
+                var args = [originalEvent].concat(data);
+                if (cb) {
+                    args.push(cb);
+                }
+                delete originalEvent.promise;
+                this.binaryMsgQueue.push(args);
                 return _ret;
             }
             var msg = {};
@@ -483,9 +509,9 @@ var Socket = function () {
                 this.uid++;
             }
 
-            if (cb) {
+            if (cb || promise) {
                 msg.needCb = true;
-                if (cb === true) {
+                if (promise) {
                     ret = new Promise(function (resolve) {
                         _this2.cbMap[msg.uid] = function (result) {
                             resolve(result);
@@ -512,15 +538,16 @@ var Socket = function () {
                 msg.type = "msg";
             }
             this._send(JSON.stringify(msg));
+
             return ret;
         }
     }, {
         key: 'sendCb',
         value: function sendCb(uid, data) {
-            this.emit(false, data, false, {
+            this.emit({
                 cb: true,
                 uid: uid
-            });
+            }, data);
         }
     }, {
         key: 'once',

@@ -121,7 +121,11 @@ class Socket {
                         }
                     }
                     this.eventListenerMap[event].forEach(function (listener) {
-                        listener(...data, cb);
+                        let ret;
+                        ret = listener(...data, cb);
+                        if (ret && ret.then && cb) {
+                            ret.then(cb);
+                        }
                     });
                     break;
                 case 'wait-binary':
