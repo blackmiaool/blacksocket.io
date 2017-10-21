@@ -19,8 +19,16 @@ function getServerWithPort() {
         path: testPath,
     });
 }
+
 function getClientWithPort() {
     return ioc(`:${testPort}${testPath}`);
+}
+
+function getCsSet() {
+    return {
+        server: getServerWithPort(),
+        client: getClientWithPort()
+    }
 }
 const acceptedData = {
     a: 1,
@@ -42,26 +50,26 @@ describe('server', function () {
     afterEach(() => {
         server && server.close();
         client && client.close();
+        server = null;
+        client = null;
     });
 
 
     it('should receive a connection', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
 
         server.on('connection', function () {
             setImmediate(done);
         });
-        client = getClientWithPort();
     });
     it('should support once', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
         const event2data = JSON.parse(JSON.stringify(acceptedData));
         server.on('connection', function (socket) {
             socket.once(eventName, () => {
                 done();
             });
         });
-        client = getClientWithPort();
         client.on('connect', function () {
             for (const name in event2data) {
                 client.emit(eventName, event2data[name]);
@@ -69,7 +77,7 @@ describe('server', function () {
         });
     });
     it('should support multiple arguments', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
         const event2data = JSON.parse(JSON.stringify(acceptedData));
         server.on('connection', function (socket) {
             socket.on(eventName, (a, b, c, cb) => {
@@ -79,7 +87,6 @@ describe('server', function () {
                 cb();
             });
         });
-        client = getClientWithPort();
         client.on('connect', function () {
             client.emit(eventName, 1, 2, 3, () => {
                 done();
@@ -87,7 +94,7 @@ describe('server', function () {
         });
     });
     it('should receive verious types of data', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
         const event2data = JSON.parse(JSON.stringify(acceptedData));
 
         server.on('connection', function (socket) {
@@ -104,7 +111,6 @@ describe('server', function () {
             }
         });
 
-        client = getClientWithPort();
         client.on('connect', function () {
             for (const eventName in event2data) {
                 client.emit(eventName, event2data[eventName]);
@@ -112,12 +118,11 @@ describe('server', function () {
         });
     });
     it('can be closed', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
 
         server.on('connection', function (socket) {
             setImmediate(server.close);
         });
-        client = getClientWithPort();
         client.on('disconnect', done);
     });
     describe('create', function () {
@@ -143,7 +148,7 @@ describe('server', function () {
     describe('callback', function () {
         it('should emit data and get callback called', function (done) {
             const eventParams = { a: 1, b: 2 };
-            server = getServerWithPort();
+            ({ server, client } = getCsSet());
 
             server.on('connection', function (socket) {
                 socket.emit(eventName, eventParams, (data) => {
@@ -155,7 +160,6 @@ describe('server', function () {
                 });
             });
 
-            client = getClientWithPort();
             client.on('connect', function () {
                 client.on(eventName, (data, cb) => {
                     for (const i in data) {
@@ -167,10 +171,10 @@ describe('server', function () {
         });
         it('should support promise', function (done) {
             const eventParams = { a: 1, b: 2 };
-            server = getServerWithPort();
+            ({ server, client } = getCsSet());
 
             server.on('connection', async function (socket) {
-                const data = await socket.emit({ event: eventName, promise: true }, eventParams);
+                const data = await socket.emitp(eventName, eventParams);
                 for (const i in data) {
                     data[i] /= 2;
                 }
@@ -179,7 +183,6 @@ describe('server', function () {
 
             });
 
-            client = getClientWithPort();
             client.on('connect', function () {
                 client.on(eventName, (data, cb) => {
                     for (const i in data) {
@@ -191,10 +194,10 @@ describe('server', function () {
         });
         it('callback supports promise', function (done) {
             const eventParams = { a: 1, b: 2 };
-            server = getServerWithPort();
+            ({ server, client } = getCsSet());
 
             server.on('connection', async function (socket) {
-                const data = await socket.emit({ event: eventName, promise: true }, eventParams);
+                const data = await socket.emitp(eventName, eventParams);
                 for (const i in data) {
                     data[i] /= 2;
                 }
@@ -203,7 +206,6 @@ describe('server', function () {
 
             });
 
-            client = getClientWithPort();
             client.on('connect', function () {
                 client.on(eventName, (data) => {
                     return new Promise((resolve) => {
@@ -222,8 +224,8 @@ describe('server', function () {
 
     describe('binary', function () {
         it('can receive ArrayBuffer', function (done) {
-            server = getServerWithPort();
-            client = getClientWithPort();
+            ({ server, client } = getCsSet());
+
             server.on('connection', function (socket) {
                 socket.on(eventName, async (data) => {
                     const buf = await fs.readFile(binaryTestFile1);
@@ -237,8 +239,7 @@ describe('server', function () {
             });
         });
         it('can receive ArrayBuffer in callback', function (done) {
-            server = getServerWithPort();
-            client = getClientWithPort();
+            ({ server, client } = getCsSet());
             server.on('connection', function (socket) {
                 socket.emit(eventName, {}, async (data) => {
                     const buf = await fs.readFile(binaryTestFile1);
@@ -255,8 +256,7 @@ describe('server', function () {
             });
         });
         it('can receive ArrayBuffer in object', function (done) {
-            server = getServerWithPort();
-            client = getClientWithPort();
+            ({ server, client } = getCsSet());
             server.on('connection', function (socket) {
                 socket.on(eventName, (data) => {
                     Promise.all([fs.readFile(binaryTestFile1), fs.readFile(binaryTestFile2)])
@@ -276,8 +276,7 @@ describe('server', function () {
 
         });
         it('can buffer parallel ArrayBuffer', function (done) {
-            server = getServerWithPort();
-            client = getClientWithPort();
+            ({ server, client } = getCsSet());
             server.on('connection', function (socket) {
                 socket.on("a", async (data, cb) => {
                     const buffer1 = await fs.readFile(binaryTestFile1);
@@ -295,17 +294,17 @@ describe('server', function () {
                     .then(([buffer1, buffer2]) => {
                         Promise.all([
                             new Promise(function (resolve) {
-                                client.emit({ event: "a", promise: true }, buffer1.buffer).then((result) => {
+                                client.emitp("a", buffer1.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
                             }),
                             new Promise(function (resolve) {
-                                client.emit({ event: "b", promise: true }, buffer2.buffer).then((result) => {
+                                client.emitp("b", buffer2.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
-                                client.emit({ event: "b", promise: true }, buffer2.buffer).then((result) => {
+                                client.emitp("b", buffer2.buffer).then((result) => {
                                     result.should.equal(true);
                                     resolve();
                                 });
@@ -334,14 +333,13 @@ describe('client', function () {
         });
     });
     it('should be created with a path', function (done) {
-        server = getServerWithPort();
-        client = getClientWithPort();
+        ({ server, client } = getCsSet());
         client.on('connect', () => {
             setImmediate(done);
         });
     });
     it('should receive verious types of data', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
 
         const event2data = JSON.parse(JSON.stringify(acceptedData));
 
@@ -350,7 +348,6 @@ describe('client', function () {
                 socket.emit(eventName, event2data[eventName]);
             }
         });
-        client = getClientWithPort();
         client.on('connect', function () {
             for (const eventName in event2data) {
                 client.on(eventName, function (data) {
@@ -367,7 +364,7 @@ describe('client', function () {
     });
     it('should emit data and get callback called', function (done) {
         const eventParams = { a: 1, b: 2 };
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
 
         server.on('connection', function (socket) {
             socket.on(eventName, (data, cb) => {
@@ -378,7 +375,6 @@ describe('client', function () {
             });
         });
 
-        client = getClientWithPort();
         client.on('connect', function () {
             client.emit(eventName, eventParams, (data) => {
                 for (const i in data) {
@@ -391,14 +387,13 @@ describe('client', function () {
         });
     });
     it('can be closed', function (done) {
-        server = getServerWithPort();
+        ({ server, client } = getCsSet());
 
         server.on('connection', function (socket) {
             socket.on('disconnect', () => {
                 done();
             });
         });
-        client = getClientWithPort();
         client.on('connect', () => {
             setImmediate(() => client.close());
         });

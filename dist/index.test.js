@@ -374,18 +374,27 @@ var Socket = function () {
                         }
                         var cb = void 0;
                         if (needCb) {
-                            cb = function cb(data) {
-                                _this.sendCb(uid, data);
+                            cb = function cb() {
+                                for (var _len = arguments.length, data = Array(_len), _key = 0; _key < _len; _key++) {
+                                    data[_key] = arguments[_key];
+                                }
+
+                                _this.sendCb.apply(_this, [uid].concat(data));
                             };
                         }
                         _this.eventListenerMap[event].forEach(function (listener) {
-                            listener.apply(undefined, _toConsumableArray(data).concat([cb]));
+                            var ret = void 0;
+                            ret = listener.apply(undefined, _toConsumableArray(data).concat([cb]));
+                            if (ret && ret.then && cb) {
+                                ret.then(cb);
+                            }
                         });
                         break;
                     case 'wait-binary':
                         _this.ws.send(_this.binaryData.pop());
                         if (!_this.binaryData.length && _this.binaryMsgQueue.length) {
-                            _this.emit.apply(_this, _this.binaryMsgQueue.shift());
+                            console.log(_this.binaryMsgQueue);
+                            _this.underlyingEmit.apply(_this, _this.binaryMsgQueue.shift());
                         }
                         break;
                     case "cb":
@@ -461,53 +470,46 @@ var Socket = function () {
             // }
         }
     }, {
-        key: 'emit',
-        value: function emit(event) {
+        key: 'underlyingEmit',
+        value: function underlyingEmit(_ref) {
             var _this2 = this;
 
-            //extra is not for user
-            var originalEvent = event;
-            var cb = void 0;
+            var event = _ref.event,
+                _ref$promise = _ref.promise,
+                promise = _ref$promise === undefined ? false : _ref$promise,
+                cb = _ref.cb,
+                data = _ref.data,
+                _ref$type = _ref.type,
+                type = _ref$type === undefined ? 'msg' : _ref$type,
+                uid = _ref.uid;
 
-            for (var _len = arguments.length, data = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-                data[_key - 1] = arguments[_key];
-            }
-
-            if (typeof data[data.length - 1] === 'function') {
-                cb = data.pop();
-            }
-            var extra = {};
-            var promise = false;
-            if ((typeof event === 'undefined' ? 'undefined' : _typeof(event)) === 'object') {
-                extra = event;
-                promise = event.promise;
-                event = event.event;
-            }
+            var ret = void 0;
 
             if (this.binaryData.length) {
-                var _ret = void 0;
+                console.log('ho');
+                var params = Object.assign({}, arguments[0]);
                 if (promise) {
-                    _ret = new Promise(function (resolve) {
-                        cb = resolve;
+                    ret = new Promise(function (resolve) {
+                        params.cb = resolve;
+                        params.promise = false;
                     });
                 }
-                var args = [originalEvent].concat(data);
-                if (cb) {
-                    args.push(cb);
-                }
-                delete originalEvent.promise;
-                this.binaryMsgQueue.push(args);
-                return _ret;
+                console.log('params', params);
+                this.binaryMsgQueue.push(params);
+                return ret;
             }
-            var msg = {};
-            var ret = void 0;
-            this.binaryData = [];
-            if (extra.cb) {
-                msg.uid = extra.uid;
-            } else {
-                msg.uid = this.uid;
+
+            if (!uid) {
+                uid = this.uid;
                 this.uid++;
             }
+
+            var msg = {
+                type: type,
+                uid: uid,
+                data: data,
+                event: event
+            };
 
             if (cb || promise) {
                 msg.needCb = true;
@@ -519,9 +521,6 @@ var Socket = function () {
                     });
                 } else if (typeof cb === 'function') {
                     this.cbMap[msg.uid] = cb;
-                } else {
-                    console.warn('expect a function or a true as the third parameter');
-                    return;
                 }
             }
             var arrayBuffers = getArrayBuffers(data);
@@ -529,25 +528,46 @@ var Socket = function () {
                 msg.bufferPaths = arrayBuffers.paths;
                 this.binaryData = arrayBuffers.buffers;
             }
-            msg.data = data;
 
-            msg.event = event;
-            if (extra.cb) {
-                msg.type = "cb";
-            } else {
-                msg.type = "msg";
-            }
             this._send(JSON.stringify(msg));
-
             return ret;
         }
     }, {
+        key: 'emitp',
+        value: function emitp(event) {
+            for (var _len2 = arguments.length, data = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                data[_key2 - 1] = arguments[_key2];
+            }
+
+            return this.underlyingEmit({ event: event, promise: true, data: data });
+        }
+    }, {
+        key: 'emit',
+        value: function emit(event) {
+            for (var _len3 = arguments.length, data = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+                data[_key3 - 1] = arguments[_key3];
+            }
+
+            var cb = void 0;
+            if (typeof data[data.length - 1] === 'function') {
+                cb = data.pop();
+            }
+            return this.underlyingEmit({
+                event: event, data: data, cb: cb
+            });
+        }
+    }, {
         key: 'sendCb',
-        value: function sendCb(uid, data) {
-            this.emit({
-                cb: true,
-                uid: uid
-            }, data);
+        value: function sendCb(uid) {
+            for (var _len4 = arguments.length, data = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+                data[_key4 - 1] = arguments[_key4];
+            }
+
+            this.underlyingEmit({
+                type: 'cb',
+                uid: uid,
+                data: data
+            });
         }
     }, {
         key: 'once',
