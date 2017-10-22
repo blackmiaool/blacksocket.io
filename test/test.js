@@ -4,8 +4,8 @@ const fs = require('fs-extra');
 const path = require('path');
 
 const io = require('../server');
-const ioc = require('../src/client');
-
+const ioc = require('../lib/client');
+console.log(io)
 const expect = chai.expect;
 const testPort = 23044;
 const testPath = '/test';

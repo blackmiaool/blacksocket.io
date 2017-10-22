@@ -7,7 +7,7 @@ gulp.task('demo', () => {
         .pipe(gulp.dest('demo'))
 });
 gulp.task('es6', () => {
-    return gulp.src(['./src/socket.js', './src/client.js'])
+    return gulp.src(['./lib/socket.js', './lib/client.js'])
         .pipe(concatES6({
             name: 'blacksocket.es6'
         }))

@@ -1,46 +1,67 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+interface UnderlyingEmitArgs {
+    event?: string,
+    promise?: boolean,
+    data: any[],
+    cb?: Function,
+    type?: string,
+    uid?: number
+}
+interface UnderlyingMsg {
+    uid: number,
+    needCb: boolean,
+    data: any[],
+    event: string,
+    type: string,
+    bufferPaths?: Path[]
+
+}
+type Path = string[];
+type Binary = ArrayBuffer | Buffer;
+type ArrayBuffersInfo = [Path[], Binary[]];
+
 const binaryReadyEvent = '__black_binary_ready';
-function isBinary(data) {
+
+function isBinary(data): boolean {
     if (!data) {
         return false;
     }
     const name = Object.getPrototypeOf(data).constructor.name;
+
     if (name === 'ArrayBuffer' || name === 'Buffer') {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
-function canTraverse(data) {
+function canTraverse(data): boolean {
     return data && typeof data === 'object';
 }
-function getArrayBuffers(data) {
+function getArrayBuffers(data): ArrayBuffersInfo {
     if (!canTraverse(data)) {
         return null;
     }
-    const ret = [[], []];
+
+    const ret: ArrayBuffersInfo = [[], []];
     if (isBinary(data)) {
         ret[0].push([]);
         ret[1].push(data);
         return ret;
     }
-    function traverseObj(data, path) {
+    function traverseObj(data, path: Path): void {
         for (const key in data) {
             if (isBinary(data[key])) {
                 path.push(key);
                 ret[0].push(path.slice());
                 ret[1].push(data[key]);
                 path.pop();
-            }
-            else if (canTraverse(data)) {
+            } else if (canTraverse(data)) {
                 path.push(key);
                 traverseObj(data[key], path);
                 path.pop();
             }
         }
     }
+
     traverseObj(data, []);
     if (!ret[0].length) {
         return null;
@@ -48,6 +69,7 @@ function getArrayBuffers(data) {
     return ret;
 }
 function set(root, path, data) {
+
     if (path.includes('constructor') || path.includes('__proto__')) {
         return;
     }
@@ -63,7 +85,20 @@ function set(root, path, data) {
     }, root);
     return root;
 }
+
 class Socket {
+    ws: any
+    protected binaryData: Binary[]
+    protected binaryMsgQueue: UnderlyingEmitArgs[]
+    protected binaryInfo: UnderlyingMsg
+    protected eventListenerMap: {
+        [propName: string]: Function[]
+    }
+    protected cbMap: object
+    protected uid: number
+    firstConnect: boolean
+    closed: boolean
+
     constructor() {
         Object.assign(this, {
             uid: 1,
@@ -73,14 +108,14 @@ class Socket {
             closed: false
         });
     }
-    sendCb(uid, ...data) {
+    protected sendCb(uid: number, ...data): void {
         this.underlyingEmit({
             type: 'cb',
             uid,
             data
         });
     }
-    _send(msg) {
+    protected _send(msg: string): void {
         if (this.ws.readyState === 1) {
             this.ws.send(msg);
         }
@@ -88,10 +123,13 @@ class Socket {
         //     console.log('bug: not ready', this.ws.readyState);
         // }
     }
-    underlyingEmit({ event, promise = false, cb, data, type = 'msg', uid }) {
-        let ret;
+    protected underlyingEmit({
+        event, promise = false, cb, data, type = 'msg', uid
+    }: UnderlyingEmitArgs): Promise<any> | void {
+        let ret: Promise<any>;
+
         if (this.binaryData.length) {
-            const params = Object.assign({}, arguments[0]);
+            const params: UnderlyingEmitArgs = Object.assign({}, arguments[0]);
             if (promise) {
                 ret = new Promise((resolve) => {
                     params.cb = resolve;
@@ -101,39 +139,42 @@ class Socket {
             this.binaryMsgQueue.push(params);
             return ret;
         }
+
         if (!uid) {
             uid = this.uid;
             this.uid++;
         }
-        const msg = {
+
+        const msg: UnderlyingMsg = {
             type,
             uid,
             data,
             event,
             needCb: false
         };
+
         if (cb || promise) {
             msg.needCb = true;
             if (promise) {
                 ret = new Promise((resolve) => {
                     this.cbMap[msg.uid] = function (result) {
                         resolve(result);
-                    };
+                    }
                 });
-            }
-            else if (typeof cb === 'function') {
+            } else if (typeof cb === 'function') {
                 this.cbMap[msg.uid] = cb;
             }
         }
-        const arrayBuffers = getArrayBuffers(data);
+        const arrayBuffers: ArrayBuffersInfo = getArrayBuffers(data);
         if (arrayBuffers) {
             msg.bufferPaths = arrayBuffers[0];
             this.binaryData = arrayBuffers[1];
         }
+
         this._send(JSON.stringify(msg));
         return ret;
     }
-    init(ws) {
+    init(ws: any): void {
         this.ws = ws;
         this.binaryData = [];
         this.binaryMsgQueue = [];
@@ -146,26 +187,34 @@ class Socket {
                 }
                 binaryData = message.data;
                 content = this.binaryInfo;
-            }
-            else if (!message.data || message.data[0] !== '{') {
+            } else if (!message.data || message.data[0] !== '{') {
                 return;
             }
             if (!content) {
                 content = JSON.parse(message.data);
             }
-            let { uid, needCb, data, event, type, bufferPaths } = content;
+            let {
+                uid,
+                needCb,
+                data,
+                event,
+                type,
+                bufferPaths
+            } = content;
             if (binaryData) {
                 const path = bufferPaths.pop();
+
                 data = set(data, path, binaryData);
+
             }
-            const checkSendBinaryBuffer = () => {
+            const checkSendBinaryBuffer = (): boolean => {
                 if (bufferPaths && bufferPaths.length) {
                     this.binaryInfo = content;
                     this.ws.send(JSON.stringify({ type: 'wait-binary' }));
                     return true;
                 }
                 return false;
-            };
+            }
             switch (type) {
                 case 'msg':
                     if (checkSendBinaryBuffer()) {
@@ -174,11 +223,11 @@ class Socket {
                     if (!this.eventListenerMap[event]) {
                         return;
                     }
-                    let cb;
+                    let cb: Function;
                     if (needCb) {
                         cb = (...data) => {
                             this.sendCb(uid, ...data);
-                        };
+                        }
                     }
                     this.eventListenerMap[event].forEach(function (listener) {
                         let ret;
@@ -204,10 +253,12 @@ class Socket {
                     break;
             }
         });
+
+
         ws.addEventListener('open', () => {
-            const connectListeners = this.eventListenerMap['connect'];
-            const reconnectListeners = this.eventListenerMap['reconnect'];
-            const firstListeners = this.eventListenerMap['first-connect'];
+            const connectListeners: Function[] = this.eventListenerMap['connect'];
+            const reconnectListeners: Function[] = this.eventListenerMap['reconnect'];
+            const firstListeners: Function[] = this.eventListenerMap['first-connect'];
             connectListeners && connectListeners.forEach((cb) => {
                 cb();
             });
@@ -215,8 +266,7 @@ class Socket {
                 reconnectListeners && reconnectListeners.forEach((cb) => {
                     cb();
                 });
-            }
-            else {
+            } else {
                 this.firstConnect = false;
                 firstListeners && firstListeners.forEach((cb) => {
                     cb();
@@ -230,19 +280,20 @@ class Socket {
             });
         });
     }
-    open() {
+    open(): void {
         this.closed = false;
         this.ws.open();
     }
-    close() {
+    close(): void {
         this.closed = true;
         this.ws.close();
     }
-    emitp(event, ...data) {
-        return this.underlyingEmit({ event, promise: true, data });
+
+    emitp(event: string, ...data): Promise<any> {
+        return this.underlyingEmit({ event, promise: true, data }) as Promise<any>;
     }
-    emit(event, ...data) {
-        let cb;
+    emit(event: string, ...data): Socket {
+        let cb: Function;
         if (typeof data[data.length - 1] === 'function') {
             cb = data.pop();
         }
@@ -251,15 +302,15 @@ class Socket {
         });
         return this;
     }
-    once(event, cb) {
+    once(event: string, cb: Function): Socket {
         const wrapper = () => {
             const list = this.eventListenerMap[event];
             cb();
             list.splice(list.indexOf(wrapper), 1);
-        };
+        }
         return this.on(event, wrapper);
     }
-    on(event, cb) {
+    on(event: string, cb: Function): Socket {
         if (!this.eventListenerMap[event]) {
             this.eventListenerMap[event] = [];
         }
@@ -267,63 +318,4 @@ class Socket {
         return this;
     }
 }
-exports.default = Socket;
-
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const isBrowser = typeof location !== 'undefined';
-let WS;
-if (isBrowser) {
-    WS = WebSocket;
-}
-else {
-    WS = eval(`require('ws')`);
-}
-function io(addr = "/") {
-    let ws;
-    //auto connect
-    let checkInterval;
-    const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
-    const hostname = isBrowser ? location.hostname : 'localhost';
-    if (addr.startsWith(':') || addr.startsWith('/')) {
-        addr = `${protocol}//${hostname}${addr}`;
-    }
-    else {
-        throw new Error('invalid addr' + addr);
-    }
-    function connect(addr) {
-        if (socket.closed) {
-            if (checkInterval) {
-                clearInterval(checkInterval);
-            }
-            return;
-        }
-        if (socket.ws) {
-            socket.ws.close();
-        }
-        ws = new WS(addr);
-        ws.addEventListener("close", function (event) {
-            if (checkInterval) {
-                clearInterval(checkInterval);
-            }
-            checkInterval = setInterval(function () {
-                connect(addr);
-            }, 5000);
-        });
-        ws.addEventListener("open", function (event) {
-            if (checkInterval) {
-                clearInterval(checkInterval);
-                checkInterval = null;
-            }
-        });
-        socket.init(ws);
-    }
-    const socket = new socket_1.default();
-    connect(addr);
-    setInterval(() => {
-        if (ws.readyState == WS.OPEN) {
-            ws.send(Math.floor(Math.random() * 1000) + "");
-        }
-    }, 25000);
-    return socket;
-}
+export default Socket;

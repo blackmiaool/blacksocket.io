@@ -7,14 +7,17 @@ if (watch) {
 }
 module.exports = [{
     entry: {
-        "blacksocket": './src/client.js',
-        "blacksocket.min": './src/client.js',
+        "blacksocket": './lib/client.js',
+        "blacksocket.min": './lib/client.js'
     },
     output: {
-        path: path.resolve(__dirname, './client/'),
+        path: path.resolve(path.join(__dirname, 'client')),
         filename: '[name].js',
         libraryTarget: 'umd',
 
+    },
+    resolve: {
+        extensions: [".ts", ".tsx", ".js", ".json"]
     },
     module: {
         rules: [
@@ -27,6 +30,10 @@ module.exports = [{
                         presets: ['env']
                     }
                 }
+            },
+            {
+                test: /\.tsx?$/,
+                loader: 'awesome-typescript-loader'
             }
         ]
     },
