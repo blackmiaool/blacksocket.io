@@ -1,31 +1,33 @@
 import Socket from './socket';
 const WS = require("ws");
-function createSocketIo(wsserver) {
-    function on(event, cb) {
-        return wsserver.on(event, function (ws) {
+class WSserver {
+    wsserver: any
+    constructor(wsserver: any) {
+        this.wsserver = wsserver;
+    }
+    on(event: string, cb: (socket: Socket) => void) {
+        return this.wsserver.on(event, function (ws) {
             if (event === 'connection') {
                 const socket: Socket = new Socket();
                 socket.init(ws);
                 cb(socket);
             } else {
-                cb();
+                cb(null);
             }
 
         });
     }
-    function close() {
+    close = () => {
         try {
-            wsserver._server && wsserver._server.close();
-            wsserver.close()
+            this.wsserver._server && this.wsserver._server.close();
+            this.wsserver.close()
         } catch (e) {
             console.log(e)
         }
-
     }
-    return {
-        on,
-        close
-    }
+}
+function createSocketIo(wsserver) {
+    return new WSserver(wsserver);
 }
 function creator1(server, options) {
     var WebSocketServer = WS.Server;
@@ -33,7 +35,7 @@ function creator1(server, options) {
     optionsAll.server = server;
     return createSocketIo(new WebSocketServer(optionsAll));
 }
-function creator2(port, options) {
+function creator2(port: number, options) {
     var server = require('http').createServer();
     server.listen(port);
     return creator1(server, options);
