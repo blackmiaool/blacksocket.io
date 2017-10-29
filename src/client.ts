@@ -9,6 +9,7 @@ if (isBrowser) {
 } else {
     WS = eval(`require('ws')`);
 }
+
 function io(addr: string = "/"): Socket {
 
     let ws;
@@ -24,7 +25,7 @@ function io(addr: string = "/"): Socket {
     }
 
 
-    function connect(addr: string) {
+    function connect(addr: string): void {
         if (socket.closed) {
             if (checkInterval) {
                 clearInterval(checkInterval);
@@ -35,7 +36,7 @@ function io(addr: string = "/"): Socket {
             socket.ws.close();
         }
         ws = new WS(addr);
-        ws.addEventListener("close", function (event) {
+        ws.addEventListener("close", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
@@ -44,7 +45,7 @@ function io(addr: string = "/"): Socket {
             }, 5000);
         });
 
-        ws.addEventListener("open", function (event) {
+        ws.addEventListener("open", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
                 checkInterval = null;

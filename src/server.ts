@@ -26,21 +26,24 @@ class WSserver {
         }
     }
 }
-function createSocketIo(wsserver) {
+function createSocketIo(wsserver): WSserver {
     return new WSserver(wsserver);
 }
-function creator1(server, options) {
+function creator1(server, options): WSserver {
     var WebSocketServer = WS.Server;
     const optionsAll = Object.assign({}, options);
     optionsAll.server = server;
     return createSocketIo(new WebSocketServer(optionsAll));
 }
-function creator2(port: number, options) {
+function creator2(port: number, options): WSserver {
     var server = require('http').createServer();
     server.listen(port);
     return creator1(server, options);
 }
-function creator() {
+
+function creator(server: number, options): WSserver;
+function creator(port: number, options): WSserver;
+function creator(): WSserver {
     const args = arguments;
     if (typeof args[0] === 'number') {
         return creator2.apply(false, arguments);
@@ -50,6 +53,7 @@ function creator() {
         return creator1.apply(false, arguments);
     } else {
         console.log('unrecognized arguments', args);
+        return null;
     }
 }
 
