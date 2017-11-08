@@ -1,12 +1,13 @@
 {
     "name": "blacksocket.io",
-    "version": "1.0.28",
+    "version": "1.0.29",
     "description": "",
     "main": "server.js",
     "files": [
         "src/*",
         "server.js",
-        "client/*"
+        "client/*",
+        "lib/*"
     ],
     "scripts": {
         "test": "mocha",
