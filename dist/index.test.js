@@ -202,7 +202,7 @@ function io() {
             socket.ws.close();
         }
         ws = new WS(addr);
-        ws.addEventListener("close", function (event) {
+        ws.addEventListener("close", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
@@ -210,7 +210,7 @@ function io() {
                 connect(addr);
             }, 5000);
         });
-        ws.addEventListener("open", function (event) {
+        ws.addEventListener("open", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
                 checkInterval = null;
@@ -453,21 +453,22 @@ var Socket = function () {
                         if (!_this2.eventListenerMap[event]) {
                             return;
                         }
-                        var cb = void 0;
+                        var _cb = void 0;
                         if (needCb) {
-                            cb = function cb() {
+                            _cb = function cb() {
                                 for (var _len2 = arguments.length, data = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
                                     data[_key2] = arguments[_key2];
                                 }
 
+                                _cb = null;
                                 _this2.sendCb.apply(_this2, [uid].concat(data));
                             };
                         }
                         _this2.eventListenerMap[event].forEach(function (listener) {
                             var ret = void 0;
-                            ret = listener.apply(undefined, _toConsumableArray(data).concat([cb]));
-                            if (ret && ret.then && cb) {
-                                ret.then(cb);
+                            ret = listener.apply(undefined, _toConsumableArray(data).concat([_cb]));
+                            if (ret && ret.then && _cb) {
+                                ret.then(_cb);
                             }
                         });
                         break;
