@@ -177,6 +177,7 @@ class Socket {
                     let cb;
                     if (needCb) {
                         cb = (...data) => {
+                            cb = null;
                             this.sendCb(uid, ...data);
                         };
                     }
@@ -302,7 +303,7 @@ function io(addr = "/") {
             socket.ws.close();
         }
         ws = new WS(addr);
-        ws.addEventListener("close", function (event) {
+        ws.addEventListener("close", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
@@ -310,7 +311,7 @@ function io(addr = "/") {
                 connect(addr);
             }, 5000);
         });
-        ws.addEventListener("open", function (event) {
+        ws.addEventListener("open", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
                 checkInterval = null;

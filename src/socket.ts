@@ -226,6 +226,7 @@ class Socket {
                     let cb: Function;
                     if (needCb) {
                         cb = (...data) => {
+                            cb = null;
                             this.sendCb(uid, ...data);
                         }
                     }
