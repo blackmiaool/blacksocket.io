@@ -460,6 +460,9 @@ var Socket = function () {
                                     data[_key2] = arguments[_key2];
                                 }
 
+                                if (!_cb) {
+                                    return;
+                                }
                                 _cb = null;
                                 _this2.sendCb.apply(_this2, [uid].concat(data));
                             };

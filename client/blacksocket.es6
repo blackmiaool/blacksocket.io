@@ -289,7 +289,10 @@ function io(addr = "/") {
     let checkInterval;
     const protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
     const hostname = isBrowser ? location.hostname : 'localhost';
-    if (addr.startsWith(':') || addr.startsWith('/')) {
+    if (addr.startsWith('ws://')) {
+        //do nothing        
+    }
+    else if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = `${protocol}//${hostname}${addr}`;
     }
     else {

@@ -18,7 +18,9 @@ function io(addr: string = "/"): Socket {
 
     const protocol: string = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
     const hostname: string = isBrowser ? location.hostname : 'localhost';
-    if (addr.startsWith(':') || addr.startsWith('/')) {
+    if (addr.startsWith('ws://')) {
+        //do nothing        
+    } else if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = `${protocol}//${hostname}${addr}`;
     } else {
         throw new Error('invalid addr' + addr);
