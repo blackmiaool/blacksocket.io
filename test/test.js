@@ -62,6 +62,28 @@ describe('server', function () {
             setImmediate(done);
         });
     });
+    it('should receive a disconnection', function (done) {
+        ({ server, client } = getCsSet());
+        server.on('connection', function () {
+            setTimeout(() => {
+                client.close();
+            });
+            client.on('disconnect', done);
+        });
+    });
+    it('maintains a client set', function (done) {
+        ({ server, client: client1 } = getCsSet());
+        const client2 = getClientWithPort();
+        const client3 = getClientWithPort();
+        let cnt = 0;
+        server.on('connection', function (socket) {
+            cnt++;
+            if (cnt === 3) {
+                const clients = server.clients;
+                done();
+            }
+        });
+    });
     it('should support once', function (done) {
         ({ server, client } = getCsSet());
         const event2data = JSON.parse(JSON.stringify(acceptedData));

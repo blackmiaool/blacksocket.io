@@ -1,20 +1,32 @@
 import Socket from './socket';
 const WS = require("ws");
+interface Sockets {
+    clients: () => Array<Socket>,
+}
 class WSserver {
     wsserver: any
+    sockets: Sockets
+    clients: Set<Socket>
     constructor(wsserver: any) {
         this.wsserver = wsserver;
+        this.clients = new Set();
+        this.sockets = {
+            clients: () => [...this.clients]
+        }
     }
     on(event: string, cb: (socket: Socket) => void) {
-        return this.wsserver.on(event, function (ws) {
+        return this.wsserver.on(event, (ws) => {
             if (event === 'connection') {
                 const socket: Socket = new Socket();
                 socket.init(ws);
+                this.clients.add(socket);
+                socket.on('disconnect', () => {
+                    this.clients.delete(socket);
+                });
                 cb(socket);
             } else {
                 cb(null);
             }
-
         });
     }
     close = () => {

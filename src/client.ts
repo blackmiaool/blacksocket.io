@@ -23,7 +23,7 @@ function io(addr: string = "/"): Socket {
     } else if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = `${protocol}//${hostname}${addr}`;
     } else {
-        throw new Error('invalid addr' + addr);
+        throw new Error('invalid addr ' + addr);
     }
 
 

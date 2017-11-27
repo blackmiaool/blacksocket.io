@@ -13,7 +13,6 @@ interface UnderlyingMsg {
     event: string,
     type: string,
     bufferPaths?: Path[]
-
 }
 type Path = string[];
 type Binary = ArrayBuffer | Buffer;

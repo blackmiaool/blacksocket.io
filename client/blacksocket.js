@@ -102,7 +102,7 @@ function io() {
     } else if (addr.startsWith(':') || addr.startsWith('/')) {
         addr = protocol + "//" + hostname + addr;
     } else {
-        throw new Error('invalid addr' + addr);
+        throw new Error('invalid addr ' + addr);
     }
     function connect(addr) {
         if (socket.closed) {
