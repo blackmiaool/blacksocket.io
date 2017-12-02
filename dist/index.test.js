@@ -292,9 +292,6 @@ function set(root, path, data) {
     if (path.includes('constructor') || path.includes('__proto__')) {
         return [{ message: 'cant use meta properties(constructor, __proto__)' }];
     }
-    if (!path[0]) {
-        return data;
-    }
     path.reduce(function (p, section, i) {
         if (i === path.length - 1) {
             p[section] = data;

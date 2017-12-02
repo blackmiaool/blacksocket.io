@@ -515,4 +515,19 @@ describe('coverage', function () {
         }).should.throw();
         done();
     });
+    it('cant send after closed', function (done) {
+        ({ server, client } = getCsSet());
+
+        server.on('connection', function (socket) {
+            // can't reach
+            socket.on('done', done);
+        });
+        client.on('connect', () => {
+            setTimeout(() => {
+                client.close();
+                client.emit('done');
+                done();
+            });
+        })
+    });
 });
