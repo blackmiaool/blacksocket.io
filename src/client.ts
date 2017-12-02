@@ -10,7 +10,9 @@ if (isBrowser) {
     WS = eval(`require('ws')`);
 }
 
-function io(addr: string = "/"): Socket {
+function io(addr: string = "/", {
+    reconnectionDelayMax = 5000
+} = {}): Socket {
 
     let ws;
     //auto connect
@@ -44,7 +46,7 @@ function io(addr: string = "/"): Socket {
             }
             checkInterval = setInterval(function () {
                 connect(addr)
-            }, 5000);
+            }, reconnectionDelayMax);
         });
 
         ws.addEventListener("open", function () {

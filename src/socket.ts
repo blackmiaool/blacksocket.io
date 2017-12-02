@@ -35,17 +35,9 @@ function isBinary(data): boolean {
 function canTraverse(data): boolean {
     return data && typeof data === 'object';
 }
-function getArrayBuffers(data): ArrayBuffersInfo {
-    if (!canTraverse(data)) {
-        return null;
-    }
+function getArrayBuffers(data: any[]): ArrayBuffersInfo {
 
     const ret: ArrayBuffersInfo = [[], []];
-    if (isBinary(data)) {
-        ret[0].push([]);
-        ret[1].push(data);
-        return ret;
-    }
     function traverseObj(data, path: Path): void {
         for (const key in data) {
             if (isBinary(data[key])) {
@@ -70,7 +62,7 @@ function getArrayBuffers(data): ArrayBuffersInfo {
 function set(root, path, data) {
 
     if (path.includes('constructor') || path.includes('__proto__')) {
-        return;
+        return [{ message: 'cant use meta properties(constructor, __proto__)' }];
     }
     if (!path[0]) {
         return data;
@@ -160,7 +152,7 @@ class Socket {
                         resolve(result);
                     }
                 });
-            } else if (typeof cb === 'function') {
+            } else {
                 this.cbMap[msg.uid] = cb;
             }
         }
@@ -282,10 +274,6 @@ class Socket {
                 cb();
             });
         });
-    }
-    open(): void {
-        this.closed = false;
-        this.ws.open();
     }
     close(): void {
         this.closed = true;

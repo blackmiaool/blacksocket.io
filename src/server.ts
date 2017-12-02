@@ -7,6 +7,7 @@ class WSserver {
     wsserver: any
     sockets: Sockets
     clients: Set<Socket>
+    closed: Boolean
     constructor(wsserver: any) {
         this.wsserver = wsserver;
         this.clients = new Set();
@@ -30,9 +31,13 @@ class WSserver {
         });
     }
     close = () => {
+        if (this.closed) {
+            return;
+        }
         try {
             this.wsserver._server && this.wsserver._server.close();
             this.wsserver.close()
+            this.closed = true;
         } catch (e) {
             console.log(e)
         }
