@@ -80,6 +80,7 @@ describe('server', function () {
             cnt++;
             if (cnt === 3) {
                 const clients = server.clients;
+                [...clients.values()].should.deep.equal(server.sockets.clients());
                 setTimeout(() => {
                     client1.close();
                     client2.close();
@@ -482,5 +483,36 @@ describe('client', function () {
         client.on('connect', () => {
             setImmediate(() => client.close());
         });
+    });
+});
+describe('coverage', function () {
+    let server;
+    let client;
+    afterEach(() => {
+        server && server.close();
+        client && client.close();
+        server = null;
+        client = null;
+    });
+    it('has a safe server', function (done) {
+        ({ server, client } = getCsSet());
+
+        server.on('connection', function (socket) {
+            socket.on('done', done);
+        });
+        client.on('connect', () => {
+            client.ws.send(new ArrayBuffer([123]));
+            client.ws.send('a');
+            client.emit('done');
+        });
+    });
+    it('server can refuses wrong arguments', function (done) {
+        (function () {
+            io("1");
+        }).should.throw();
+        (function () {
+            io({});
+        }).should.throw();
+        done();
     });
 });

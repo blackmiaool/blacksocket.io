@@ -181,6 +181,10 @@ if (isBrowser) {
 function io() {
     var addr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "/";
 
+    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        _ref$reconnectionDela = _ref.reconnectionDelayMax,
+        reconnectionDelayMax = _ref$reconnectionDela === undefined ? 5000 : _ref$reconnectionDela;
+
     var ws = void 0;
     //auto connect
     var checkInterval = void 0;
@@ -210,7 +214,7 @@ function io() {
             }
             checkInterval = setInterval(function () {
                 connect(addr);
-            }, 5000);
+            }, reconnectionDelayMax);
         });
         ws.addEventListener("open", function () {
             if (checkInterval) {
@@ -263,15 +267,7 @@ function canTraverse(data) {
     return data && (typeof data === "undefined" ? "undefined" : _typeof(data)) === 'object';
 }
 function getArrayBuffers(data) {
-    if (!canTraverse(data)) {
-        return null;
-    }
     var ret = [[], []];
-    if (isBinary(data)) {
-        ret[0].push([]);
-        ret[1].push(data);
-        return ret;
-    }
     function traverseObj(data, path) {
         for (var key in data) {
             if (isBinary(data[key])) {
@@ -294,7 +290,7 @@ function getArrayBuffers(data) {
 }
 function set(root, path, data) {
     if (path.includes('constructor') || path.includes('__proto__')) {
-        return;
+        return [{ message: 'cant use meta properties(constructor, __proto__)' }];
     }
     if (!path[0]) {
         return data;
@@ -390,7 +386,7 @@ var Socket = function () {
                             resolve(result);
                         };
                     });
-                } else if (typeof cb === 'function') {
+                } else {
                     this.cbMap[msg.uid] = cb;
                 }
             }
@@ -517,12 +513,6 @@ var Socket = function () {
                     cb();
                 });
             });
-        }
-    }, {
-        key: "open",
-        value: function open() {
-            this.closed = false;
-            this.ws.open();
         }
     }, {
         key: "close",

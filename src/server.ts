@@ -39,6 +39,7 @@ class WSserver {
             this.wsserver.close()
             this.closed = true;
         } catch (e) {
+            /* istanbul ignore next */
             console.log(e)
         }
     }
@@ -65,12 +66,11 @@ function creator(): WSserver {
     if (typeof args[0] === 'number') {
         return creator2.apply(false, arguments);
     } else if (typeof args[0] !== 'object' || !args[0]) {
-        console.log('unrecognized arguments', args);
+        throw new Error(`unrecognized arguments ${JSON.stringify(args)}`);
     } else if (args[0].listen) {
         return creator1.apply(false, arguments);
     } else {
-        console.log('unrecognized arguments', args);
-        return null;
+        throw new Error(`unrecognized arguments ${JSON.stringify(args)}`);
     }
 }
 
