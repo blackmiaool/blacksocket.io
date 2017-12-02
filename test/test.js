@@ -2,7 +2,7 @@ const httpServer = require('http').Server;
 const chai = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
-
+require("blanket");
 const io = require('../server');
 const ioc = require('../lib/client');
 console.log(io)
