@@ -21,7 +21,7 @@ function getServerWithPort() {
 }
 
 function getClientWithPort() {
-    return ioc(`:${testPort}${testPath}`);
+    return ioc(`:${testPort}${testPath}`, { reconnectionDelayMax: 10 });
 }
 
 function getCsSet() {
@@ -65,10 +65,10 @@ describe('server', function () {
     it('should receive a disconnection', function (done) {
         ({ server, client } = getCsSet());
         server.on('connection', function () {
+            client.on('disconnect', done);
             setTimeout(() => {
                 client.close();
             });
-            client.on('disconnect', done);
         });
     });
     it('maintains a client set', function (done) {
@@ -80,7 +80,12 @@ describe('server', function () {
             cnt++;
             if (cnt === 3) {
                 const clients = server.clients;
-                done();
+                setTimeout(() => {
+                    client1.close();
+                    client2.close();
+                    client3.close();
+                    done();
+                });
             }
         });
     });
@@ -139,6 +144,25 @@ describe('server', function () {
             }
         });
     });
+    it('should avoid sending meta properties', async function () {
+        const bianry = await fs.readFile('test/binary-test1.jpg');
+        ({ server, client } = getCsSet());
+        await new Promise((resolve) => {
+            server.on('connection', function (socket) {
+                socket.on('a', (emptyObject) => {
+                    emptyObject.should.deep.equal({ message: 'cant use meta properties(constructor, __proto__)' });
+                    resolve();
+                });
+            });
+
+            client.on('connect', function () {
+                client.emit('a', {
+                    'constructor': bianry
+                });
+            });
+        });
+
+    });
     it('can be closed', function (done) {
         ({ server, client } = getCsSet());
 
@@ -168,6 +192,17 @@ describe('server', function () {
         });
     });
     describe('callback', function () {
+        it('can send event to unexisting listener', function (done) {
+            ({ server, client } = getCsSet());
+            server.on('connection', async function (socket) {
+                socket.emit("a", "b");
+                done();
+            });
+
+            client.on('connect', function () {
+                client.on("c", (data, cb) => { });
+            });
+        });
         it('should emit data and get callback called', function (done) {
             const eventParams = { a: 1, b: 2 };
             ({ server, client } = getCsSet());
@@ -249,14 +284,19 @@ describe('server', function () {
             ({ server, client } = getCsSet());
 
             server.on('connection', function (socket) {
+                let cnt = 0;
                 socket.on(eventName, async (data) => {
                     const buf = await fs.readFile(binaryTestFile1);
                     buf.should.deep.equal(data);
-                    done();
+                    cnt++;
+                    if (cnt === 2) {
+                        done();
+                    }
                 });
             });
             client.on('connect', async function () {
                 const buf = await fs.readFile(binaryTestFile1);
+                client.emit(eventName, buf.buffer);
                 client.emit(eventName, buf.buffer);
             });
         });
@@ -406,6 +446,29 @@ describe('client', function () {
                 done();
             });
 
+        });
+    });
+    it('should receive first-connect event', function (done) {
+        ({ server, client } = getCsSet());
+        client.on('first-connect', done);
+    });
+    it('should receive reconnect event', function (done) {
+        ({ server, client } = getCsSet());
+        let server1;
+        server.on('connection', function (socket) {
+            socket.on('close', () => {
+                setTimeout(() => {
+                    socket.close();
+                });
+            });
+        });
+        client.on('connect', () => {
+            client.emit('close');
+        });
+        client.on('reconnect', () => {
+            setTimeout(() => {
+                done();
+            });
         });
     });
     it('can be closed', function (done) {

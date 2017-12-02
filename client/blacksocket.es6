@@ -17,15 +17,7 @@ function canTraverse(data) {
     return data && typeof data === 'object';
 }
 function getArrayBuffers(data) {
-    if (!canTraverse(data)) {
-        return null;
-    }
     const ret = [[], []];
-    if (isBinary(data)) {
-        ret[0].push([]);
-        ret[1].push(data);
-        return ret;
-    }
     function traverseObj(data, path) {
         for (const key in data) {
             if (isBinary(data[key])) {
@@ -49,7 +41,7 @@ function getArrayBuffers(data) {
 }
 function set(root, path, data) {
     if (path.includes('constructor') || path.includes('__proto__')) {
-        return;
+        return [{ message: 'cant use meta properties(constructor, __proto__)' }];
     }
     if (!path[0]) {
         return data;
@@ -121,7 +113,7 @@ class Socket {
                     };
                 });
             }
-            else if (typeof cb === 'function') {
+            else {
                 this.cbMap[msg.uid] = cb;
             }
         }
@@ -234,10 +226,6 @@ class Socket {
             });
         });
     }
-    open() {
-        this.closed = false;
-        this.ws.open();
-    }
     close() {
         this.closed = true;
         this.ws.close();
@@ -283,7 +271,7 @@ if (isBrowser) {
 else {
     WS = eval(`require('ws')`);
 }
-function io(addr = "/") {
+function io(addr = "/", { reconnectionDelayMax = 5000 } = {}) {
     let ws;
     //auto connect
     let checkInterval;
@@ -315,7 +303,7 @@ function io(addr = "/") {
             }
             checkInterval = setInterval(function () {
                 connect(addr);
-            }, 5000);
+            }, reconnectionDelayMax);
         });
         ws.addEventListener("open", function () {
             if (checkInterval) {
