@@ -4,7 +4,7 @@ A websocket wrapper. Basically compatiable with socket.io.
 
 [![Travis](https://travis-ci.org/blackmiaool/blacksocket.io.svg?branch=master)](https://travis-ci.org/blackmiaool/blacksocket.io)
 [![NPM version](https://img.shields.io/npm/v/blacksocket.io.svg)](https://www.npmjs.com/package/blacksocket.io)
-
+[![Coverage Status](https://coveralls.io/repos/github/blackmiaool/blacksocket.io/badge.svg?branch=master)](https://coveralls.io/github/blackmiaool/blacksocket.io?branch=master)
 
 
 * Lightweight
