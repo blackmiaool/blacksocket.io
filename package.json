@@ -1,6 +1,6 @@
 {
     "name": "blacksocket.io",
-    "version": "1.0.39",
+    "version": "1.0.40",
     "description": "",
     "main": "server.js",
     "files": [
@@ -28,7 +28,7 @@
     },
     "homepage": "https://github.com/blackmiaool/blacksocket.io#readme",
     "dependencies": {
-        "ws": "^3.2.0"
+        "ws": "^3.3.2"
     },
     "config": {
         "blanket": {
