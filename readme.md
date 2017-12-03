@@ -8,6 +8,7 @@ A websocket wrapper. Basically compatiable with socket.io.
 [![Gzip Size](http://img.badgesize.io/blackmiaool/blacksocket.io/master/client/blacksocket.min.js?compression=gzip&label=client_gzip)](https://github.com/blackmiaool/blacksocket.io/blob/master/client/blacksocket.min.js)
 [![dependencies Status](https://david-dm.org/blackmiaool/blacksocket.io/status.svg)](https://david-dm.org/blackmiaool/blacksocket.io)
 [![contributors](https://img.shields.io/github/contributors/blackmiaool/blacksocket.io.svg)](https://github.com/blackmiaool/blacksocket.io/graphs/contributors)
+[![GitHub license](https://img.shields.io/github/license/blackmiaool/blacksocket.io.svg)](https://github.com/blackmiaool/blacksocket.io/blob/master/LICENSE)
 
 * Lightweight
 * Callback
