@@ -6,7 +6,8 @@ A websocket wrapper. Basically compatiable with socket.io.
 [![NPM version](https://img.shields.io/npm/v/blacksocket.io.svg)](https://www.npmjs.com/package/blacksocket.io)
 [![Coverage Status](https://coveralls.io/repos/github/blackmiaool/blacksocket.io/badge.svg?branch=master)](https://coveralls.io/github/blackmiaool/blacksocket.io?branch=master)
 [![Gzip Size](http://img.badgesize.io/blackmiaool/blacksocket.io/master/client/blacksocket.min.js?compression=gzip&label=client_gzip)](https://github.com/blackmiaool/blacksocket.io/blob/master/client/blacksocket.min.js)
-
+[![dependencies Status](https://david-dm.org/blackmiaool/blacksocket.io/status.svg)](https://david-dm.org/blackmiaool/blacksocket.io)
+[![contributors](https://img.shields.io/github/contributors/blackmiaool/blacksocket.io.svg)](https://github.com/blackmiaool/blacksocket.io/graphs/contributors)
 
 * Lightweight
 * Callback
