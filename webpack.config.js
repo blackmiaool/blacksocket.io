@@ -13,6 +13,7 @@ module.exports = [{
     output: {
         path: path.resolve(path.join(__dirname, 'client')),
         filename: '[name].js',
+        library: "io",
         libraryTarget: 'umd',
 
     },
