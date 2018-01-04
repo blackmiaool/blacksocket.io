@@ -85,6 +85,7 @@ class Socket {
     }
     protected cbMap: object
     protected uid: number
+    connecting: boolean
     firstConnect: boolean
     closed: boolean
 
@@ -265,12 +266,14 @@ class Socket {
                     cb();
                 });
             }
+            this.connecting = true;
         });
         ws.addEventListener('close', () => {
             const disconnectMap = this.eventListenerMap['disconnect'];
             disconnectMap && disconnectMap.forEach((cb) => {
                 cb();
             });
+            this.connecting = false;
         });
     }
     close(): void {
@@ -293,11 +296,22 @@ class Socket {
     }
     once(event: string, cb: Function): Socket {
         const wrapper = () => {
-            const list = this.eventListenerMap[event];
             cb();
-            list.splice(list.indexOf(wrapper), 1);
+            this.off(event, wrapper);
         }
         return this.on(event, wrapper);
+    }
+    off(event: string, cb: Function): Boolean {
+        if (!this.eventListenerMap[event]) {
+            return false;
+        }
+        const index = this.eventListenerMap[event].indexOf(cb);
+        if (index === -1) {
+            return false;
+        } else {
+            this.eventListenerMap[event].splice(index, 1);
+            return true;
+        }
     }
     on(event: string, cb: Function): Socket {
         if (!this.eventListenerMap[event]) {
