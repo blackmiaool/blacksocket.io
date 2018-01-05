@@ -48,8 +48,12 @@ describe('server', function () {
     let server;
     let client;
     afterEach(() => {
-        server && server.close();
-        client && client.close();
+        try {
+            server && server.close();
+            client && client.close();
+        } catch (e) {
+
+        }
         server = null;
         client = null;
     });
@@ -68,7 +72,7 @@ describe('server', function () {
             client.on('disconnect', done);
             setTimeout(() => {
                 client.close();
-            });
+            }, 50);
         });
     });
     it('maintains a client set', function (done) {
