@@ -503,12 +503,14 @@ var Socket = function () {
                         cb();
                     });
                 }
+                _this2.connecting = true;
             });
             ws.addEventListener('close', function () {
                 var disconnectMap = _this2.eventListenerMap['disconnect'];
                 disconnectMap && disconnectMap.forEach(function (cb) {
                     cb();
                 });
+                _this2.connecting = false;
             });
         }
     }, {
@@ -548,11 +550,24 @@ var Socket = function () {
             var _this3 = this;
 
             var wrapper = function wrapper() {
-                var list = _this3.eventListenerMap[event];
                 cb();
-                list.splice(list.indexOf(wrapper), 1);
+                _this3.off(event, wrapper);
             };
             return this.on(event, wrapper);
+        }
+    }, {
+        key: "off",
+        value: function off(event, cb) {
+            if (!this.eventListenerMap[event]) {
+                return false;
+            }
+            var index = this.eventListenerMap[event].indexOf(cb);
+            if (index === -1) {
+                return false;
+            } else {
+                this.eventListenerMap[event].splice(index, 1);
+                return true;
+            }
         }
     }, {
         key: "on",

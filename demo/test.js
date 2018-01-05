@@ -466,10 +466,10 @@ describe('client', function () {
         client.on('connect', () => {
             client.emit('close');
         });
-        client.on('reconnect', () => {
+        client.once('reconnect', () => {
             setTimeout(() => {
                 done();
-            });
+            }, 10);
         });
     });
     it('can be closed', function (done) {
