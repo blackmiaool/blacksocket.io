@@ -44,6 +44,9 @@ function io(addr: string = "/", {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
+            if (socket.closed) {
+                return;
+            }
             checkInterval = setInterval(function () {
                 connect(addr)
             }, reconnectionDelayMax);

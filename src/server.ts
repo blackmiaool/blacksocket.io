@@ -24,6 +24,9 @@ class WSserver {
                 socket.on('disconnect', () => {
                     this.clients.delete(socket);
                 });
+                socket.on('error', (e) => {
+                    console.log('socketerror', e);
+                });
                 cb(socket);
             } else {
                 cb(null);

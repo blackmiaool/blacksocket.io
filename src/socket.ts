@@ -1,3 +1,5 @@
+import { setTimeout } from "timers";
+
 interface UnderlyingEmitArgs {
     event?: string,
     promise?: boolean,
@@ -168,6 +170,9 @@ class Socket {
         this.ws = ws;
         this.binaryData = [];
         this.binaryMsgQueue = [];
+        this.ws.on('error', (e) => {
+            console.log('blacksocket on error:', e.message)
+        });
         ws.addEventListener("message", (message) => {
             let binaryData;
             let content;
@@ -278,7 +283,13 @@ class Socket {
     }
     close(): void {
         this.closed = true;
-        this.ws.close();
+        if (this.ws.readyState === 1) {
+            this.ws.close();
+        } else {
+            setTimeout(() => {
+                this.ws.close();
+            }, undefined);
+        }
     }
 
     emitp(event: string, ...data): Promise<any> {

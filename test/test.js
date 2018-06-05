@@ -70,9 +70,7 @@ describe('server', function () {
         ({ server, client } = getCsSet());
         server.on('connection', function () {
             client.on('disconnect', done);
-            setTimeout(() => {
-                client.close();
-            }, 50);
+            client.close();
         });
     });
     it('maintains a client set', function (done) {
@@ -274,9 +272,7 @@ describe('server', function () {
                         for (const i in data) {
                             data[i] *= 2;
                         }
-                        setTimeout(() => {
-                            resolve(data);
-                        }, 10);
+                        resolve(data);
                     });
                 });
             });
@@ -462,18 +458,14 @@ describe('client', function () {
         let server1;
         server.on('connection', function (socket) {
             socket.on('close', () => {
-                setTimeout(() => {
-                    socket.close();
-                });
+                socket.close();
             });
         });
         client.on('connect', () => {
             client.emit('close');
         });
         client.once('reconnect', () => {
-            setTimeout(() => {
-                done();
-            }, 10);
+            done();
         });
     });
     it('can be closed', function (done) {

@@ -126,6 +126,9 @@ class Socket {
         this.ws = ws;
         this.binaryData = [];
         this.binaryMsgQueue = [];
+        this.ws.on('error', (e) => {
+            console.log('blacksocket on error:', e.message);
+        });
         ws.addEventListener("message", (message) => {
             let binaryData;
             let content;
@@ -227,7 +230,14 @@ class Socket {
     }
     close() {
         this.closed = true;
-        this.ws.close();
+        if (this.ws.readyState === 1) {
+            this.ws.close();
+        }
+        else {
+            timers_1.setTimeout(() => {
+                this.ws.close();
+            }, undefined);
+        }
     }
     emitp(event, ...data) {
         return this.underlyingEmit({ event, promise: true, data });
@@ -311,6 +321,9 @@ function io(addr = "/", { reconnectionDelayMax = 5000 } = {}) {
         ws.addEventListener("close", function () {
             if (checkInterval) {
                 clearInterval(checkInterval);
+            }
+            if (socket.closed) {
+                return;
             }
             checkInterval = setInterval(function () {
                 connect(addr);
