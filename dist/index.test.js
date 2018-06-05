@@ -212,6 +212,9 @@ function io() {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
+            if (socket.closed) {
+                return;
+            }
             checkInterval = setInterval(function () {
                 connect(addr);
             }, reconnectionDelayMax);
@@ -403,6 +406,9 @@ var Socket = function () {
             this.ws = ws;
             this.binaryData = [];
             this.binaryMsgQueue = [];
+            this.ws.on && this.ws.on('error', function (e) {
+                console.log('blacksocket on error:', e.message);
+            });
             ws.addEventListener("message", function (message) {
                 var _cbMap;
 
@@ -516,8 +522,16 @@ var Socket = function () {
     }, {
         key: "close",
         value: function close() {
+            var _this3 = this;
+
             this.closed = true;
-            this.ws.close();
+            if (this.ws.readyState === 1) {
+                this.ws.close();
+            } else {
+                setTimeout(function () {
+                    _this3.ws.close();
+                }, undefined);
+            }
         }
     }, {
         key: "emitp",
@@ -547,11 +561,11 @@ var Socket = function () {
     }, {
         key: "once",
         value: function once(event, cb) {
-            var _this3 = this;
+            var _this4 = this;
 
             var wrapper = function wrapper() {
                 cb();
-                _this3.off(event, wrapper);
+                _this4.off(event, wrapper);
             };
             return this.on(event, wrapper);
         }

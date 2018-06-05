@@ -126,7 +126,7 @@ class Socket {
         this.ws = ws;
         this.binaryData = [];
         this.binaryMsgQueue = [];
-        this.ws.on('error', (e) => {
+        this.ws.on && this.ws.on('error', (e) => {
             console.log('blacksocket on error:', e.message);
         });
         ws.addEventListener("message", (message) => {
@@ -234,7 +234,7 @@ class Socket {
             this.ws.close();
         }
         else {
-            timers_1.setTimeout(() => {
+            setTimeout(() => {
                 this.ws.close();
             }, undefined);
         }
