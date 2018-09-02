@@ -8,11 +8,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="format-detection" content="telephone=no">
     <!-- compile your own file -->
-    <script src="../../dist/index.test.js"></script>
+    <script src="./blacksocket.js"></script>
 </head>
 
 <body>
+    <script>
+        const socket = window.io(`:23033/test`);
+        socket.on('first-connect', function () {
+            console.log('connected');
+            setInterval(() => {
+                socket.emit('client-event', {
+                    a: 'client params'
+                }, function (cbParams) {
+                    console.log('client-event cb', cbParams);
+                });
+            }, 1000);
+        });
 
+        socket.on('server-event', function (params, cb) {
+            console.log('server-event', params);
+            cb({
+                a: "server-event cb"
+            });
+        });
+
+    </script>
 </body>
 
 </html>

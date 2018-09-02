@@ -10,28 +10,34 @@ A websocket wrapper. Basically compatiable with socket.io.
 [![contributors](https://img.shields.io/github/contributors/blackmiaool/blacksocket.io.svg)](https://github.com/blackmiaool/blacksocket.io/graphs/contributors)
 [![GitHub license](https://img.shields.io/github/license/blackmiaool/blacksocket.io.svg)](https://github.com/blackmiaool/blacksocket.io/blob/master/LICENSE)
 
-* Lightweight
-* Callback
-* Auto reconnection
-* Object sending
-* Binary sending (even in object) (even in callback) 
-* Once
-* Promise
+-   Lightweight
+-   Callback
+-   Auto reconnection
+-   Object sending
+-   Binary sending (even in object) (even in callback)
+-   Once
+-   Promise
 
-### Install 
+### Install
 
-#### Server 
+#### Server
+
 ```bash
 npm i -S blacksocket.io
 ```
-#### Client 
 
-##### Install with npm 
+#### Client
+
+##### Install with npm
+
 ```bash
 npm i -S blacksocket.io
 ```
-##### Use script file directly 
+
+##### Use script file directly
+
 Just for testing
+
 ```html
 <script src="https://raw.githubusercontent.com/blackmiaool/blacksocket.io/master/client/blacksocket.min.js"></script>
 ```
@@ -44,21 +50,21 @@ I have no time for writing a whole documentation for it. If you want to use it, 
 
 ```javascript
 // initialize with port and path
-const io = require('blacksocket.io/server')(23033, {
-    path: '/test'
+const io = require("blacksocket.io/server")(23033, {
+    path: "/test"
 });
-io.on('connection', function (socket) {
-    console.log('socket connection');
+io.on("connection", function(socket) {
+    console.log("socket connection");
     // listen client event
-    socket.on('client-event', function (params, cb) {
-        console.log('client-event', params);
+    socket.on("client-event", function(params, cb) {
+        console.log("client-event", params);
         cb({ a: "it's an object" });
     });
     setInterval(() => {
         // send event to client
-        socket.emit('server-event', { a: 'server params' }, function (params) {
+        socket.emit("server-event", { a: "server params" }, function(params) {
             // receive a callback
-            console.log('server-event cb', params);
+            console.log("server-event cb", params);
         });
     }, 3000);
 });
@@ -71,23 +77,31 @@ const io = require("blacksocket.io/client");
 // initialize with port and path
 const socket = io(`:23033/test`);
 
-// first-connect: triggered on first connection 
+// first-connect: triggered on first connection
 // connect: triggered on every successful connection(including reconnection)
 // reconnection event: triggered on reconnection
-socket.on('first-connect', function () {
-    console.log('connected');
+socket.on("first-connect", function() {
+    console.log("connected");
     setInterval(() => {
         // send event to server
-        socket.emit('client-event', { a: 'client params' }, function (cbParams) {
+        socket.emit("client-event", { a: "client params" }, function(cbParams) {
             // receive a callback
-            console.log('client-event cb', cbParams);
+            console.log("client-event cb", cbParams);
         });
     }, 1000);
 });
 
-socket.on('server-event', function (params, cb) {
-    console.log('server-event', params);
+socket.on("server-event", function(params, cb) {
+    console.log("server-event", params);
     // invoke the callback to return some data to server
     cb({ a: "server-event cb" });
 });
 ```
+
+### Try it with docker
+
+```bash
+docker run -it --rm -p 23034:80 -p 23033:23033 blackmiaool/blacksocket.io
+```
+
+Open the [website](http://localhost:23034)

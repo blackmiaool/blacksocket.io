@@ -1,7 +1,7 @@
 {
     "name": "blacksocket.io",
     "version": "1.0.54",
-    "description": "",
+    "description": "A websocket wrapper.",
     "main": "server.js",
     "files": [
         "src/*",
@@ -15,7 +15,9 @@
         "test-watch": "mocha --watch --bail",
         "webpack": "webpack --watch",
         "dev": "tsc --watch",
-        "build": "tsc && gulp && webpack"
+        "build": "tsc && gulp && webpack",
+        "docker-build": "docker build . -t blackmiaool/blacksocket.io",
+        "docker-run": "docker run -it --rm -p 23034:80 -p 23033:23033 blackmiaool/blacksocket.io"
     },
     "repository": {
         "type": "git",
