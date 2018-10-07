@@ -110,5 +110,5 @@ Open the [website](http://localhost:23034)
 <blockquote>
  <img src="https://raw.githubusercontent.com/blackmiaool/blacksocket.io/master/image.png"/>                       
 </blockquote>
-<cite>- &lt; Refactoring JavaScript Turning Bad Code Into Good Code&gt; </cite>
+<cite>- &lt;Refactoring JavaScript Turning Bad Code Into Good Code&gt; </cite>
 
