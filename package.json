@@ -12,7 +12,7 @@
     "scripts": {
         "test": "nyc mocha && nyc report --reporter=text-lcov | coveralls",
         "nyc": "nyc mocha",
-        "test-watch": "mocha --watch --bail",
+        "test-watch": "mocha --watch --bail test/test.js",
         "webpack": "webpack --watch",
         "dev": "tsc --watch",
         "build": "tsc && gulp && webpack",
