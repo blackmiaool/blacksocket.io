@@ -69,6 +69,9 @@ describe('server', function () {
         clientNode.stderr.on('data', (data) => {
             console.log(`stderr: ${data}`);
         });
+        clientNode.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
         server.on('connection', function (client) {
             clientNode.kill();
             done();

@@ -12,6 +12,7 @@ client.on('connect', () => {
 
 function handle(signal) {
     console.log(`Received ${signal}`);
+    process.exit(1)
 }
 
 process.on('SIGTERM', handle);
