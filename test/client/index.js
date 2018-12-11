@@ -1,6 +1,6 @@
 const {
     getClientWithPort
-} = require('./test-config');
+} = require('../test-config');
 
 
 const client = getClientWithPort();

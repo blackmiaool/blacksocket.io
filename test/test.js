@@ -65,19 +65,13 @@ describe('server', function () {
 
     it('should receive a connection', function (done) {
         server = getServerWithPort();
-        const clientNode = spawn('node', ['test/client.js']);
+        const clientNode = spawn('node', ['test/client/index.js']);
+        clientNode.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
         server.on('connection', function (client) {
             clientNode.kill();
-            // clientNode.stdout.on('data', (data) => {
-            //     console.log(`stdout: ${data}`);
-            // });
             done();
-            // setTimeout(() => {
-            //     done();
-            // }, 500);
-        });
-        server.on('disconnect', function () {
-            console.log('dis')
         });
     });
     it('should receive a disconnection', function (done) {
@@ -86,7 +80,9 @@ describe('server', function () {
             client
         } = getCsSet());
         server.on('connection', function () {
-            client.on('disconnect', done);
+            client.on('disconnect', function () {
+                done();
+            });
             client.close();
         });
     });

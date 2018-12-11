@@ -1,7 +1,7 @@
 const io = require('../server');
 const ioc = require('../lib/client');
 const path = require("path");
-const testPort = 23044;
+const testPort = 23045;
 const testPath = '/test';
 const binaryTestFile1 = path.join(__dirname, 'binary-test1.jpg');
 const binaryTestFile2 = path.join(__dirname, 'binary-test2.jpg');
