@@ -1,6 +1,6 @@
 {
     "name": "blacksocket.io",
-    "version": "1.0.57",
+    "version": "1.0.58",
     "description": "A websocket wrapper.",
     "main": "server.js",
     "files": [
