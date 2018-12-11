@@ -74,6 +74,7 @@ describe('server', function () {
         });
         server.on('connection', function (client) {
             clientNode.kill();
+            clientNode.unref();
             done();
         });
     });

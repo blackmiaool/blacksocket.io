@@ -88,6 +88,7 @@ class Socket {
     connecting: boolean;
     firstConnect: boolean;
     closed: boolean;
+    interval: NodeJS.Timer;
 
     constructor() {
         Object.assign(this, {
@@ -287,6 +288,9 @@ class Socket {
         });
     }
     close(): void {
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
         this.closed = true;
         if (this.ws.readyState === 1) {
             this.ws.close();

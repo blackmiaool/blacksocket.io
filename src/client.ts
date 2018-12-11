@@ -60,7 +60,7 @@ function io(addr: string = "/", { reconnectionDelayMax = 5000 } = {}): Socket {
 
     const socket = new Socket();
     connect(addr);
-    setInterval(() => {
+    socket.interval = setInterval(() => {
         if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }

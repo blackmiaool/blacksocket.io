@@ -140,7 +140,7 @@ function io() {
     }
     var socket = new socket_1.default();
     connect(addr);
-    setInterval(function () {
+    socket.interval = setInterval(function () {
         if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
@@ -435,6 +435,9 @@ var Socket = function () {
         value: function close() {
             var _this3 = this;
 
+            if (this.interval) {
+                clearInterval(this.interval);
+            }
             this.closed = true;
             if (this.ws.readyState === 1) {
                 this.ws.close();

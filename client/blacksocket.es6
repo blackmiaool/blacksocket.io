@@ -236,6 +236,9 @@ class Socket {
         });
     }
     close() {
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
         this.closed = true;
         if (this.ws.readyState === 1) {
             this.ws.close();
@@ -350,7 +353,7 @@ function io(addr = "/", { reconnectionDelayMax = 5000 } = {}) {
     }
     const socket = new socket_1.default();
     connect(addr);
-    setInterval(() => {
+    socket.interval = setInterval(() => {
         if (ws.readyState == WS.OPEN) {
             ws.send(Math.floor(Math.random() * 1000) + "");
         }
