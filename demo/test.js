@@ -3,29 +3,25 @@ const chai = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
 require("blanket");
-const io = require('../server');
-const ioc = require('../lib/client');
-console.log(io)
+const {
+    spawn
+} = require('child_process');
+
 const expect = chai.expect;
-const testPort = 23044;
-const testPath = '/test';
-const binaryTestFile1 = path.join(__dirname, 'binary-test1.jpg');
-const binaryTestFile2 = path.join(__dirname, 'binary-test2.jpg');
+
+const {
+    io,
+    ioc,
+    testPort,
+    testPath,
+    binaryTestFile1,
+    binaryTestFile2,
+    eventName,
+    getServerWithPort,
+    getClientWithPort
+} = require("./test-config");
 chai.should();
 
-const eventName = 'an event';
-
-function getServerWithPort() {
-    return io(testPort, {
-        path: testPath,
-    });
-}
-
-function getClientWithPort() {
-    return ioc(`:${testPort}${testPath}`, {
-        reconnectionDelayMax: 10
-    });
-}
 
 function getCsSet() {
     return {
@@ -68,13 +64,17 @@ describe('server', function () {
 
 
     it('should receive a connection', function (done) {
-        ({
-            server,
-            client
-        } = getCsSet());
-
-        server.on('connection', function () {
-            setImmediate(done);
+        server = getServerWithPort();
+        const clientNode = spawn('node', ['test/client/index.js']);
+        clientNode.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
+        clientNode.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
+        server.on('connection', function (client) {
+            clientNode.kill();
+            done();
         });
     });
     it('should receive a disconnection', function (done) {
@@ -83,7 +83,9 @@ describe('server', function () {
             client
         } = getCsSet());
         server.on('connection', function () {
-            client.on('disconnect', done);
+            client.on('disconnect', function () {
+                done();
+            });
             client.close();
         });
     });

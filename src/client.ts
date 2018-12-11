@@ -1,7 +1,6 @@
+import Socket from "./socket";
 
-import Socket from './socket';
-
-const isBrowser: boolean = typeof location !== 'undefined';
+const isBrowser: boolean = typeof location !== "undefined";
 
 let WS;
 if (isBrowser) {
@@ -10,24 +9,22 @@ if (isBrowser) {
     WS = eval(`require('ws')`);
 }
 
-function io(addr: string = "/", {
-    reconnectionDelayMax = 5000
-} = {}): Socket {
-
+function io(addr: string = "/", { reconnectionDelayMax = 5000 } = {}): Socket {
     let ws;
     //auto connect
     let checkInterval: NodeJS.Timer;
 
-    const protocol: string = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
-    const hostname: string = isBrowser ? location.hostname : 'localhost';
-    if (addr.startsWith('ws://')) {
-        //do nothing        
-    } else if (addr.startsWith(':') || addr.startsWith('/')) {
+    const protocol: string = isBrowser
+        ? location.protocol.replace("http", "ws")
+        : "ws:";
+    const hostname: string = isBrowser ? location.hostname : "localhost";
+    if (addr.startsWith("ws://")) {
+        //do nothing
+    } else if (addr.startsWith(":") || addr.startsWith("/")) {
         addr = `${protocol}//${hostname}${addr}`;
     } else {
-        throw new Error('invalid addr ' + addr);
+        throw new Error("invalid addr " + addr);
     }
-
 
     function connect(addr: string): void {
         if (socket.closed) {
@@ -40,19 +37,19 @@ function io(addr: string = "/", {
             socket.ws.close();
         }
         ws = new WS(addr);
-        ws.addEventListener("close", function () {
+        ws.addEventListener("close", function() {
             if (checkInterval) {
                 clearInterval(checkInterval);
             }
             if (socket.closed) {
                 return;
             }
-            checkInterval = setInterval(function () {
-                connect(addr)
+            checkInterval = setInterval(function() {
+                connect(addr);
             }, reconnectionDelayMax);
         });
 
-        ws.addEventListener("open", function () {
+        ws.addEventListener("open", function() {
             if (checkInterval) {
                 clearInterval(checkInterval);
                 checkInterval = null;

@@ -82,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var socket_1 = __webpack_require__(1);
-var isBrowser = typeof location !== 'undefined';
+var isBrowser = typeof location !== "undefined";
 var WS = void 0;
 if (isBrowser) {
     WS = WebSocket;
@@ -99,14 +99,14 @@ function io() {
     var ws = void 0;
     //auto connect
     var checkInterval = void 0;
-    var protocol = isBrowser ? location.protocol.replace('http', 'ws') : 'ws:';
-    var hostname = isBrowser ? location.hostname : 'localhost';
-    if (addr.startsWith('ws://')) {
-        //do nothing        
-    } else if (addr.startsWith(':') || addr.startsWith('/')) {
+    var protocol = isBrowser ? location.protocol.replace("http", "ws") : "ws:";
+    var hostname = isBrowser ? location.hostname : "localhost";
+    if (addr.startsWith("ws://")) {
+        //do nothing
+    } else if (addr.startsWith(":") || addr.startsWith("/")) {
         addr = protocol + "//" + hostname + addr;
     } else {
-        throw new Error('invalid addr ' + addr);
+        throw new Error("invalid addr " + addr);
     }
     function connect(addr) {
         if (socket.closed) {
@@ -165,20 +165,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var binaryReadyEvent = '__black_binary_ready';
+var binaryReadyEvent = "__black_binary_ready";
 function isBinary(data) {
     if (!data) {
         return false;
     }
     var name = Object.getPrototypeOf(data).constructor.name;
-    if (name === 'ArrayBuffer' || name === 'Buffer') {
+    if (name === "ArrayBuffer" || name === "Buffer") {
         return true;
     } else {
         return false;
     }
 }
 function canTraverse(data) {
-    return data && (typeof data === "undefined" ? "undefined" : _typeof(data)) === 'object';
+    return data && (typeof data === "undefined" ? "undefined" : _typeof(data)) === "object";
 }
 function getArrayBuffers(data) {
     var ret = [[], []];
@@ -203,8 +203,8 @@ function getArrayBuffers(data) {
     return ret;
 }
 function set(root, path, data) {
-    if (path.includes('constructor') || path.includes('__proto__')) {
-        return [{ message: 'cant use meta properties(constructor, __proto__)' }];
+    if (path.includes("constructor") || path.includes("__proto__")) {
+        return [{ message: "cant use meta properties(constructor, __proto__)" }];
     }
     path.reduce(function (p, section, i) {
         if (i === path.length - 1) {
@@ -237,7 +237,7 @@ var Socket = function () {
             }
 
             this.underlyingEmit({
-                type: 'cb',
+                type: "cb",
                 uid: uid,
                 data: data
             });
@@ -263,7 +263,7 @@ var Socket = function () {
                 cb = _ref.cb,
                 data = _ref.data,
                 _ref$type = _ref.type,
-                type = _ref$type === undefined ? 'msg' : _ref$type,
+                type = _ref$type === undefined ? "msg" : _ref$type,
                 uid = _ref.uid;
 
             var ret = void 0;
@@ -317,8 +317,8 @@ var Socket = function () {
             this.ws = ws;
             this.binaryData = [];
             this.binaryMsgQueue = [];
-            this.ws.on && this.ws.on('error', function (e) {
-                console.log('blacksocket on error:', e.message);
+            this.ws.on && this.ws.on("error", function (e) {
+                console.log("blacksocket on error:", e.message);
             });
             ws.addEventListener("message", function (message) {
                 var _cbMap;
@@ -331,7 +331,7 @@ var Socket = function () {
                     }
                     binaryData = message.data;
                     content = _this2.binaryInfo;
-                } else if (!message.data || message.data[0] !== '{') {
+                } else if (!message.data || message.data[0] !== "{") {
                     return;
                 }
                 if (!content) {
@@ -352,13 +352,13 @@ var Socket = function () {
                 var checkSendBinaryBuffer = function checkSendBinaryBuffer() {
                     if (bufferPaths && bufferPaths.length) {
                         _this2.binaryInfo = content;
-                        _this2.ws.send(JSON.stringify({ type: 'wait-binary' }));
+                        _this2.ws.send(JSON.stringify({ type: "wait-binary" }));
                         return true;
                     }
                     return false;
                 };
                 switch (type) {
-                    case 'msg':
+                    case "msg":
                         if (checkSendBinaryBuffer()) {
                             return;
                         }
@@ -387,7 +387,7 @@ var Socket = function () {
                             }
                         });
                         break;
-                    case 'wait-binary':
+                    case "wait-binary":
                         _this2.ws.send(_this2.binaryData.pop());
                         if (!_this2.binaryData.length && _this2.binaryMsgQueue.length) {
                             _this2.underlyingEmit(_this2.binaryMsgQueue.shift());
@@ -403,10 +403,10 @@ var Socket = function () {
                         break;
                 }
             });
-            ws.addEventListener('open', function () {
-                var connectListeners = _this2.eventListenerMap['connect'];
-                var reconnectListeners = _this2.eventListenerMap['reconnect'];
-                var firstListeners = _this2.eventListenerMap['first-connect'];
+            ws.addEventListener("open", function () {
+                var connectListeners = _this2.eventListenerMap["connect"];
+                var reconnectListeners = _this2.eventListenerMap["reconnect"];
+                var firstListeners = _this2.eventListenerMap["first-connect"];
                 connectListeners && connectListeners.forEach(function (cb) {
                     cb();
                 });
@@ -422,8 +422,8 @@ var Socket = function () {
                 }
                 _this2.connecting = true;
             });
-            ws.addEventListener('close', function () {
-                var disconnectMap = _this2.eventListenerMap['disconnect'];
+            ws.addEventListener("close", function () {
+                var disconnectMap = _this2.eventListenerMap["disconnect"];
                 disconnectMap && disconnectMap.forEach(function (cb) {
                     cb();
                 });
@@ -461,11 +461,13 @@ var Socket = function () {
             }
 
             var cb = void 0;
-            if (typeof data[data.length - 1] === 'function') {
+            if (typeof data[data.length - 1] === "function") {
                 cb = data.pop();
             }
             this.underlyingEmit({
-                event: event, data: data, cb: cb
+                event: event,
+                data: data,
+                cb: cb
             });
             return this;
         }
