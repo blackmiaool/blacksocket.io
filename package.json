@@ -1,6 +1,6 @@
 {
     "name": "blacksocket.io",
-    "version": "1.0.54",
+    "version": "1.0.55",
     "description": "A websocket wrapper.",
     "main": "server.js",
     "files": [
@@ -11,7 +11,7 @@
     ],
     "scripts": {
         "test": "nyc mocha && nyc report --reporter=text-lcov | coveralls",
-        "nyc": "nyc mocha",
+        "nyc": "nyc mocha  test/test.js",
         "test-watch": "mocha --watch --bail test/test.js",
         "webpack": "webpack --watch",
         "dev": "tsc --watch",
@@ -52,7 +52,7 @@
         "fs-extra": "^4.0.2",
         "gulp": "^3.9.1",
         "gulp-replace": "^0.6.1",
-        "mocha": "^3.5.3",
+        "mocha": "^5.2.0",
         "mocha-lcov-reporter": "^1.3.0",
         "nyc": "^11.9.0",
         "typescript": "^2.5.3",
